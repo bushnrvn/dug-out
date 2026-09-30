@@ -144,20 +144,45 @@ def plate(cv, x, y, w, h):
 
 # ------------------------------------------------------------ banner ----
 def banner():
+    """1920x344, the wide strip itch.io actually shows. Everything is centred so a narrower page can only trim empty ground."""
+    cv = Canvas(480, 86)
+    sky(cv, 30)
+    cv.rect(0, 29, cv.w, 1, col['rim'])
+    grass(cv, 30, 5)
+    strata(cv, 35, 7)
+    tunnel(cv, 0, 42, 480, 36)
+    tunnel(cv, 60, 78, 12, 8)
+    tunnel(cv, 410, 78, 12, 8)
+    lw = spr.names['logo'][2]
+    cv.sprite(spr, 'logo', (480 - lw) // 2, 3, 1)
+    t = 'A DIGGING ARCADE GAME FOR THE GAMETANK'
+    cv.text((480 - tw(t)) // 2, 24, t, col['gold'], 1)
+    cv.sprite(spr, 'rock', 70, 38 - 4, 1)
+    # the cast, centred: 4 sprites of 24, a bat of 36, the boss of 32, gaps of 10
+    total = 24 * 4 + 36 + 32 + 5 * 10
+    x0 = (480 - total) // 2
+    end = cast(cv, x0, 76, gap=10, z=3, with_boss=False)
+    cv.sprite(spr2, 'mascot_0_0', end, 76 - 32, 2)
+    K.png_write(os.path.join(OUT, 'banner_1920x344.png'), cv.rgb(4))
+
+
+def banner_tall():
+    """The same idea at 1920x480, in case the page shows a taller banner."""
     cv = Canvas(480, 120)
-    sky(cv, 26)
-    cv.rect(0, 25, cv.w, 1, col['rim'])
-    grass(cv, 26, 5)
-    strata(cv, 31, 7)
-    tunnel(cv, 0, 54, 480, 42)                               # one long tunnel, tall enough for the boss
-    tunnel(cv, 40, 96, 14, 22)                               # a shaft going down
-    cv.sprite(spr, 'logo', 14, 3, 1)
-    cv.text(14 + 92, 6, 'A DIGGING ARCADE GAME', col['gold'], 1)
-    cv.text(14 + 92, 13, 'FOR THE GAMETANK', col['cream'], 1)
-    cast(cv, 150, 92, gap=10, z=3, with_boss=False)
-    cv.sprite(spr2, 'mascot_0_0', 330, 92 - 16 * 2, 2)
-    cv.sprite(spr, 'rock', 60, 36, 2)
-    cv.sprite(spr, 'rock', 420, 38, 2)
+    sky(cv, 34)
+    cv.rect(0, 33, cv.w, 1, col['rim'])
+    grass(cv, 34, 5)
+    strata(cv, 39, 7)
+    tunnel(cv, 0, 56, 480, 42)
+    tunnel(cv, 60, 98, 12, 22)
+    lw = spr.names['logo'][2]
+    cv.sprite(spr, 'logo', (480 - lw) // 2, 5, 1)
+    t = 'A DIGGING ARCADE GAME FOR THE GAMETANK'
+    cv.text((480 - tw(t)) // 2, 26, t, col['gold'], 1)
+    total = 24 * 4 + 36 + 32 + 5 * 10
+    x0 = (480 - total) // 2
+    end = cast(cv, x0, 96, gap=10, z=3, with_boss=False)
+    cv.sprite(spr2, 'mascot_0_0', end, 96 - 32, 2)
     K.png_write(os.path.join(OUT, 'banner_1920x480.png'), cv.rgb(4))
 
 
@@ -227,7 +252,8 @@ Panel / sidebar       %s   (slightly lighter navy)
 Border colour         %s   (muted teal)
 
 Font: pick a blocky or monospace option; the game's own type is a 3x5 pixel font.
-Banner: banner_1920x480.png. itch.io crops banners to fit the page, so the logo sits in the top-left area.
+Banner: banner_1920x344.png is the wide strip itch.io shows (the logo, tagline and cast are centred inside it).
+banner_1920x480.png is a taller version of the same banner in case the page shows more of it.
 Cover image: cover_630x500.png (itch.io's recommended cover size).
 """ % (rgbhex(col['ink']), rgbhex(col['cream']), rgbhex(col['rim']), rgbhex(col['gold']), rgbhex(col['ink']),
        rgbhex(col['void']), rgbhex(col['rimlo'])))
@@ -237,7 +263,8 @@ screenshots/   8 real frames captured from the game running in the GameTank emul
                each 1024x1024 (the 128x128 game frame at exact 8x, no smoothing).
                Suggested order on the page: 1-title, 2-digging, 3-heaters, 4-inning5, 5-boss, 6-victory.
 cover_630x500.png        the cover image.
-banner_1920x480.png      the page banner.
+banner_1920x344.png      the page banner (wide strip).
+banner_1920x480.png      the same banner, taller.
 background_tile.png      tiling page background.
 theme.txt                colours for the itch.io theme editor.
 
@@ -257,5 +284,5 @@ Regenerate:  python3 tools_py/itch_assets.py <shots folder> <output folder>
 """)
 
 
-banner(); cover(); tile(); shots(); docs()
+banner(); banner_tall(); cover(); tile(); shots(); docs()
 print('itch kit written to', OUT)
