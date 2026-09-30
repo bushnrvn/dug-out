@@ -11,7 +11,7 @@
   body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
   h1 { margin: 14px 0 2px; letter-spacing: 6px; font-size: 26px; color: #ffe0a0; text-shadow: 3px 3px 0 #0c0a26; }
   .sub { margin: 0 0 10px; font-size: 13px; opacity: .8; letter-spacing: 2px; }
-  #stage { position: relative; width: min(94vw, calc(100vh - 210px), 720px); aspect-ratio: 1 / 1;
+  #stage { position: relative; width: min(94vw, calc(100vh - 210px), 1024px); aspect-ratio: 1 / 1;
            border: 3px solid #89c6b8; border-radius: 4px; background: #000; box-shadow: 0 0 0 4px #0c0a26; }
   canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; outline: none; }
   #overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -25,9 +25,17 @@
   small { display: block; margin: 14px 0 20px; font-size: 11px; opacity: .6; text-align: center; }
   #pad { display: none; width: 100%; max-width: 640px; touch-action: none; user-select: none; -webkit-user-select: none; }
   @media (pointer: coarse) { #pad { display: block; } .keys { display: none; } }
+  /* embedded in another page (itch.io): drop the heading and give the game all the room there is */
+  .embed h1, .embed .sub { display: none; }
+  .embed body { justify-content: center; }
+  .embed #stage { width: min(98vw, calc(100vh - 92px)); margin-top: 6px; }
+  .embed #status { margin-top: 4px; }
+  .embed .keys { margin: 4px 8px 0; font-size: 12px; line-height: 1.5; }
+  .embed small { margin: 4px 0 6px; font-size: 10px; }
 </style>
 </head>
 <body>
+<script>if (window.self !== window.top) document.documentElement.classList.add('embed');</script>
 <h1>DUG OUT</h1>
 <p class="sub">A GAMETANK GAME</p>
 <div id="stage">
