@@ -26,7 +26,7 @@ Current version: see `VERSION` and `CHANGELOG.md`. The ROM for each release is i
   (and don't count toward clearing the inning), so they're a nuisance, not a threat. Strike one out for points.
 * **The final inning** is a single boss, **Mad Scott**: a huge slow foam-head that smashes a tunnel through the dirt straight at you and takes six
   strikes (a home plate counts as three). Beat it to win.
-* Deeper critters and multi-kill boulders score more. Extra life every 30,000.
+* Deeper critters and multi-kill boulders score more. Tunnelling pays too: 10, 20, 30 or 40 points per block by depth, and the Groundskeeper takes back exactly that when it rakes a block shut. Extra life every 30,000.
 
 ## Visual language ("Ballpark Strata")
 

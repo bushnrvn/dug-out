@@ -92,11 +92,13 @@ static void need_page(SpriteSlot* slot, const SpritePage* page);
 /* 0 = tunnel, 1 = dirt, 2 = boulder cell.  16-wide rows so index = r<<4|c.
  * Columns 14/15 and row 13 are permanent solid padding. */
 unsigned char map[(ROWS + 1) * 16];
+unsigned char paid[(ROWS + 1) * 16];         /* tens of points Doug was paid for digging each cell (0 = none), so the Groundskeeper takes back exactly that */
 #define M(c, r) map[(((unsigned char)(r)) << 4) | ((unsigned char)(c))]
 
 unsigned char state, state_timer, frame_ct;
 unsigned char level, lives;
 unsigned int score_h, hi_h, next_life_h;   /* score in hundreds */
+unsigned char score_t, hi_t;               /* the tens digit of the score and of the best score */
 char score_str[9], hi_str[9];
 unsigned char score_dirty;
 unsigned int lfsr = 0xACE1u;
@@ -154,27 +156,35 @@ static unsigned char absdiff(unsigned char a, unsigned char b)
 }
 #pragma code-name (pop)
 
-static void fmt_score(char* s, unsigned int v)
+static void fmt_score(char* s, unsigned int v, unsigned char t)
 {
-    /* v is hundreds; output 7 digits: 5 digits + "00" */
+    /* v is hundreds, t the tens digit; output 7 digits: 5 digits, the tens digit and a 0 */
     unsigned char i;
     for (i = 5; i > 0; --i) {
         s[i - 1] = '0' + (v % 10);
         v /= 10;
     }
-    s[5] = '0'; s[6] = '0'; s[7] = 0;
+    s[5] = '0' + t; s[6] = '0'; s[7] = 0;
 }
 
 static void add_score(unsigned int h)
 {
     score_h += h;
-    if (score_h > hi_h) hi_h = score_h;
+    if (score_h > hi_h || (score_h == hi_h && score_t > hi_t)) { hi_h = score_h; hi_t = score_t; }
     if (score_h >= next_life_h) {
         next_life_h += 300;
         if (lives < 5) ++lives;
         SFXP(ASSET__audio__oneup_sfx_ID, 2);
     }
     score_dirty = 1;
+}
+
+/* tunnelling pays in tens of points */
+static void add_tens(unsigned char t)
+{
+    score_t += t;
+    if (score_t >= 10) { score_t -= 10; add_score(1); }
+    else add_score(0);
 }
 
 /* ------------------------------------------------ live field image (sprite RAM)
@@ -358,7 +368,7 @@ static void clear_map(void)
     unsigned char r, c;
     for (r = 0; r < ROWS + 1; ++r)
         for (c = 0; c < 16; ++c)
-            M(c, r) = (r == 0 && c < COLS) ? 0 : 1;
+            { M(c, r) = (r == 0 && c < COLS) ? 0 : 1; paid[(r << 4) | c] = 0; }
 }
 
 static void carve(unsigned char c, unsigned char r, unsigned char w, unsigned char h)
@@ -553,7 +563,7 @@ static void ball_step(void)
 
 static void player_update(void)
 {
-    unsigned char want = 255, misal, d, moved = 0, c, r, slow;
+    unsigned char want = 255, misal, d, moved = 0, c, r, slow, pay;
     int b = player1_buttons;
 
     if (pdir < 2) {
@@ -604,6 +614,9 @@ static void player_update(void)
         c = (px + 4) >> 3; r = (py + 4) >> 3;
         if (M(c, r) == 1) {
             M(c, r) = 0;
+            pay = (r <= 3) ? 1 : (r <= 6) ? 2 : (r <= 9) ? 3 : 4;    /* 10, 20, 30, 40 points, by depth */
+            paid[(r << 4) | c] = pay;
+            add_tens(pay);
             mark_around(c, r);
             SFX(ASSET__audio__dig_sfx_ID);
         }
@@ -732,6 +745,14 @@ static void choose_dir_g(unsigned char i)
 }
 
 /* rake the cell just left back into dirt (never with Doug or another enemy standing in it) */
+static void sub_tens(unsigned char t)
+{
+    if (score_t >= t) score_t -= t;
+    else if (score_h) { --score_h; score_t += 10 - t; }
+    else score_t = 0;
+    score_dirty = 1;
+}
+
 static void refill_cell(unsigned char c, unsigned char r, unsigned char self)
 {
     unsigned char k;
@@ -742,6 +763,8 @@ static void refill_cell(unsigned char c, unsigned char r, unsigned char self)
         if (absdiff(e_x[k], c << 3) < 8 && absdiff(e_y[k], r << 3) < 8) return;
     }
     M(c, r) = 1;
+    k = (r << 4) | c;
+    if (paid[k]) { sub_tens(paid[k]); paid[k] = 0; }      /* the Groundskeeper takes back what the dig paid */
     mark_restore(c, r);
     mark_around(c, r);
 }
@@ -1127,8 +1150,8 @@ static void draw_hud(void)
     queue_draw_box(1, 7, 126, 9, COL_INK);
     queue_draw_box(1, 15, 126, 1, COL_RIM);
     if (score_dirty) {
-        fmt_score(score_str, score_h);
-        fmt_score(hi_str, hi_h);
+        fmt_score(score_str, score_h, score_t);
+        fmt_score(hi_str, hi_h, hi_t);
         score_dirty = 0;
     }
     text(10, 9, "RUNS", 1);
@@ -1188,7 +1211,7 @@ static void draw_world(void)
 /* ------------------------------------------------------------- game flow -- */
 static void new_game(void)
 {
-    level = 1; lives = 3; score_h = 0; next_life_h = 300;
+    level = 1; lives = 3; score_h = 0; score_t = 0; next_life_h = 300;
     hi_at_start = hi_h; new_best = 0;
 #ifdef FIXED_SEED
     run_seed = FIXED_SEED;                        /* regression builds: same caves every run */
@@ -1498,7 +1521,7 @@ void game_main(void)
 
     hi_h = 100;
     load_hiscore();
-    score_h = 0; lives = 3; level = 1;
+    score_h = 0; score_t = 0; lives = 3; level = 1;
     score_dirty = 1;
     for (i = 0; i < MAXE; ++i) e_state[i] = ES_NONE;
     for (i = 0; i < MAXR; ++i) r_on[i] = 0;
@@ -1515,7 +1538,7 @@ void game_main(void)
         case ST_TITLE:
             title_scene();
             queue_draw_box(1, 7, 126, 9, COL_INK);
-            if (score_dirty) { fmt_score(hi_str, hi_h); }
+            if (score_dirty) { fmt_score(hi_str, hi_h, hi_t); }
             text(10, 9, "BEST", 1);
             text(30, 9, hi_str, 0);
             if (player1_buttons) idle_t = 0; else ++idle_t;
@@ -1580,7 +1603,7 @@ void game_main(void)
                 if (--lives == 0) {
                     save_hiscore_if_needed();
                     need_page(&slot_over, &ASSET__over__over_bmp_load_list);
-                    fmt_score(score_str, score_h); fmt_score(hi_str, hi_h);
+                    fmt_score(score_str, score_h, score_t); fmt_score(hi_str, hi_h, hi_t);
                     state = ST_OVER; state_timer = 0; scene_t = 0;
                     play_song(ASSET__audio__over_mid, REPEAT_NONE);
                 } else {
@@ -1600,7 +1623,7 @@ void game_main(void)
                     add_score(10 * lives);           /* 1,000 per life left */
                     save_hiscore_if_needed();
                     need_page(&slot_end, &ASSET__end__end_bmp_load_list);
-                    fmt_score(score_str, score_h); fmt_score(hi_str, hi_h);
+                    fmt_score(score_str, score_h, score_t); fmt_score(hi_str, hi_h, hi_t);
                     state = ST_WIN; state_timer = 0; scene_t = 0;
                     play_song(ASSET__audio__title_mid, REPEAT_LOOP);
                 } else {
