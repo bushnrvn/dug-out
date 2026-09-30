@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Dug Out</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #1a1640; color: #dcb57f;
+               font-family: "Courier New", ui-monospace, Menlo, monospace; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+  h1 { margin: 14px 0 2px; letter-spacing: 6px; font-size: 26px; color: #ffe0a0; text-shadow: 3px 3px 0 #0c0a26; }
+  .sub { margin: 0 0 10px; font-size: 13px; opacity: .8; letter-spacing: 2px; }
+  #stage { position: relative; width: min(94vw, calc(100vh - 210px), 720px); aspect-ratio: 1 / 1;
+           border: 3px solid #89c6b8; border-radius: 4px; background: #000; box-shadow: 0 0 0 4px #0c0a26; }
+  canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; outline: none; }
+  #overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+             background: rgba(12,10,38,.92); cursor: pointer; text-align: center; }
+  #overlay b { font-size: 28px; letter-spacing: 6px; color: #ffe0a0; }
+  #overlay span { margin-top: 12px; font-size: 13px; opacity: .85; }
+  #status { margin-top: 10px; font-size: 12px; opacity: .8; min-height: 16px; }
+  .keys { margin: 10px 12px 0; font-size: 13px; line-height: 1.7; text-align: center; }
+  kbd { border: 1px solid #89c6b8; border-radius: 3px; padding: 1px 6px; background: #0c0a26; color: #ffe0a0; }
+  a { color: #89c6b8; }
+  small { display: block; margin: 14px 0 20px; font-size: 11px; opacity: .6; text-align: center; }
+  #pad { display: none; width: 100%; max-width: 640px; touch-action: none; user-select: none; -webkit-user-select: none; }
+  @media (pointer: coarse) { #pad { display: block; } .keys { display: none; } }
+</style>
+</head>
+<body>
+<h1>DUG OUT</h1>
+<p class="sub">A GAMETANK GAME</p>
+<div id="stage">
+  <canvas id="canvas" width="512" height="512" tabindex="0" oncontextmenu="event.preventDefault()"></canvas>
+  <div id="overlay"><b>CLICK TO PLAY</b><span id="loadmsg">loading...</span></div>
+</div>
+<div id="status"></div>
+<div class="keys">
+  <kbd>&larr;</kbd><kbd>&uarr;</kbd><kbd>&darr;</kbd><kbd>&rarr;</kbd> dig / move &nbsp;&middot;&nbsp;
+  <kbd>Z</kbd> throw a baseball &nbsp;&middot;&nbsp; <kbd>Enter</kbd> start / pause &nbsp;&middot;&nbsp; <kbd>R</kbd> reset
+</div>
+<img id="pad" src="static/gamepad.png" alt="touch controls">
+<small>Best score is saved in this browser. Runs on the GameTank Emulator (MIT, &copy; Clyde Shaffer) &mdash; see LICENSES.</small>
+
+<script>
+  var overlay = document.getElementById('overlay'), loadmsg = document.getElementById('loadmsg'),
+      statusEl = document.getElementById('status'), canvas = document.getElementById('canvas');
+  var ready = false;
+
+  var Module = {
+    preRun: [function () {
+      // the best score lives in the browser's IndexedDB - but never wait on it for long
+      addRunDependency('syncfs');
+      var released = false;
+      function release() { if (!released) { released = true; removeRunDependency('syncfs'); } }
+      setTimeout(release, 2500);
+      try {
+        FS.mkdir('/idbfs');
+        try { FS.mount(IDBFS, {}, '/idbfs'); FS.syncfs(true, function () { release(); }); }
+        catch (e) { console.error(e && e.message); release(); }
+      } catch (e) { console.error(e && e.message); release(); }
+    }],
+    print: function (t) { console.log(t); },
+    printErr: function (t) { console.error(t); },
+    canvas: canvas,
+    setStatus: function (t) { statusEl.textContent = t || ''; },
+    totalDependencies: 0,
+    monitorRunDependencies: function (left) {
+      this.totalDependencies = Math.max(this.totalDependencies, left);
+      Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies - left) + '/' + this.totalDependencies + ')' : '');
+    },
+    onRuntimeInitialized: function () {
+      ready = true;
+      setInterval(function () { if (document.title !== 'Dug Out') document.title = 'Dug Out'; }, 500);
+      loadmsg.textContent = 'arrows to move, Z to throw, Enter to start';
+      document.addEventListener('visibilitychange', function () {
+        Module.ccall(document.hidden ? 'PauseEmulation' : 'ResumeEmulation');
+      });
+      // on-screen pad (phones/tablets)
+      var map = [[0,2056,0,32,0,8192,0],[512,0,256,0,8192,0,4096],[0,1028,0,0,0,16,0],[0,0,0,0,0,0,0]];
+      var pad = document.getElementById('pad'), ids = [], held = 0;
+      pad.ontouchstart = function (e) {
+        e.preventDefault();
+        for (var i = 0; i < e.targetTouches.length; i++) {
+          var s = 4 / e.targetTouches[0].target.clientHeight;
+          var r = 3 - Math.floor(s * (document.body.clientHeight - e.targetTouches[i].clientY));
+          var c = Math.floor(s * e.targetTouches[i].clientX);
+          if (map[r] && map[r][c] !== undefined) { ids[e.targetTouches[i].identifier] = map[r][c]; held |= map[r][c]; }
+        }
+        Module.ccall('SetButtons', null, ['int'], [held]);
+        if (!started) start();
+      };
+      pad.ontouchend = function (e) {
+        e.preventDefault();
+        for (var i = 0; i < e.changedTouches.length; i++) held &= ~(ids[e.changedTouches[i].identifier] || 0);
+        Module.ccall('SetButtons', null, ['int'], [held]);
+      };
+    }
+  };
+
+  var started = false;
+  function start() {
+    if (!ready || started) return;
+    started = true;
+    overlay.style.display = 'none';
+    canvas.focus();
+    try { if (window.SDL2 && SDL2.audioContext && SDL2.audioContext.state === 'suspended') SDL2.audioContext.resume(); } catch (e) {}
+  }
+  overlay.addEventListener('click', start);
+  window.addEventListener('keydown', function (e) {
+    if (!started && ready && (e.key === 'Enter' || e.key === ' ')) start();
+    if (started && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].indexOf(e.key) >= 0) e.preventDefault();
+  });
+  window.onerror = function () { statusEl.textContent = 'Something went wrong - see the browser console.'; };
+  setTimeout(function () {
+    if (!ready) loadmsg.textContent = 'still loading... if this stays stuck, try Chrome or Firefox';
+  }, 10000);
+</script>
+<script async src="index.js"></script>
+</body>
+</html>

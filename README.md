@@ -6,6 +6,8 @@ and drop home plates on the rest. Mechanically it's Dig Dug-like; visually and i
 
 ## Play
 
+Current version: see `VERSION` and `CHANGELOG.md`. The ROM for each release is in `releases/` (load it in any GameTank emulator). A browser build is in `docs/`.
+
 ```sh
 ./run.sh            # build the ROM and launch it in the emulator
 ```
