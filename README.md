@@ -100,7 +100,7 @@ Screenshots land in `/tmp/dd_<name>.png`.
 
 ## Credits
 
-* Game, art, and design: bushnrvn.
+* Game design: bushnrvn.
 * GameTank SDK by Clyde Shaffer (https://github.com/clydeshaffer/gametank_sdk). `src/gt/`, `modules/`, `scripts/` and `makefile` come from it.
 * GameTankEmulator by Clyde Shaffer (https://github.com/clydeshaffer/GameTankEmulator), MIT license.
 * Music: Grieg, Hall of the Mountain King, and Take Me Out to the Ball Game (1908), both public domain.
