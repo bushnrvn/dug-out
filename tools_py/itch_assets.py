@@ -72,7 +72,7 @@ def tw(s, z=1):
 
 col = {k: P[k] for k in ('ink', 'void', 'voidhi', 'rim', 'rimlo', 'sky0', 'sky1', 'sky2', 'gold', 'cream', 'white', 'grass',
                          'grass_d', 'sun', 'lamp', 'hill', 'b1a', 'b1b', 'b1c', 'b2a', 'b2b', 'b2c', 'b3a', 'b3b', 'b3c',
-                         'b4a', 'b4b', 'b4c', 'gem', 'flame1', 'flame2', 'flame3', 'vred')}
+                         'b4a', 'b4b', 'b4c', 'gem', 'flame1', 'flame2', 'flame3', 'vred', 'hat', 'skin')}
 
 
 def strata(cv, top, seed=0):
@@ -143,47 +143,93 @@ def plate(cv, x, y, w, h):
 
 
 # ------------------------------------------------------------ banner ----
+CROWD = [P[k] for k in ('sun', 'white', 'b2c', 'gem', 'hat', 'vred', 'skin', 'b3c', 'flame2')]
+
+
+def stadium(cv, top=28):
+    """the ballpark above the dirt, as in the game: stands, light towers, scoreboards, foul poles, ad wall, striped grass."""
+    W = cv.w
+    # stands: rows of crowd, each row split by a dark gap
+    for y in range(top + 12, top + 25):
+        for x in range(W):
+            if (y - top) % 3 == 0:
+                cv.put(x, y, col['ink'])
+            else:
+                cv.put(x, y, rnd.choice(CROWD) if rnd.random() < 0.62 else col['b3a'])
+    # light towers with lamp heads
+    for tx in (100, W - 100):
+        cv.rect(tx, 6, 2, top + 18, col['lamp'])
+        cv.rect(tx - 7, 3, 16, 7, col['lamp'])
+        for i in range(4):
+            for j in range(2):
+                cv.rect(tx - 6 + i * 4, 4 + j * 3, 3, 2, col['white'])
+        cv.rect(tx - 9, 11, 20, 1, col['sky1'])                # a soft glow under the lamps
+    # two scoreboards behind the stands
+    for bx, lights in ((W // 2 - 66, (col['rim'], col['rimlo'])), (W // 2 + 12, (col['sun'], col['flame2']))):
+        cv.rect(bx, top + 3, 54, 13, col['lamp'])
+        cv.rect(bx + 2, top + 5, 50, 9, col['ink'])
+        for i in range(8):
+            cv.rect(bx + 4 + i * 6, top + 7, 4, 2, lights[i % 2])
+            cv.rect(bx + 4 + i * 6, top + 11, 4, 2, lights[(i + 1) % 2])
+    # outfield wall with ad panels
+    wy = top + 25
+    cv.rect(0, wy, W, 7, col['b4a'])
+    cv.rect(0, wy, W, 1, col['white'])
+    ads = (col['sun'], col['rim'], col['b2c'], col['cream'], col['hat'])
+    for i, x in enumerate(range(6, W - 12, 22)):
+        cv.rect(x, wy + 2, 16, 4, ads[i % len(ads)])
+        cv.rect(x + 2, wy + 3, 12, 1, col['b4a'])
+    # foul poles
+    for fx in (22, W - 24):
+        cv.rect(fx, 16, 2, wy - 14, col['gold'])
+    # striped grass and a chalk line
+    gy = wy + 7
+    for y in range(gy, gy + 14):
+        for x in range(W):
+            cv.put(x, y, col['grass'] if (x // 12) % 2 == 0 else col['grass_d'])
+    cv.rect(0, gy, W, 1, col['white'])
+    return gy
+
+
+def clay(cv, y0):
+    for y in range(y0, cv.h):
+        for x in range(cv.w):
+            r = rnd.random()
+            cv.put(x, y, col['b1a'] if r < 0.78 else (col['b1b'] if r < 0.9 else col['b1c']))
+    cv.rect(0, y0, cv.w, 1, col['cream'])
+
+
 def banner():
-    """1920x344, the wide strip itch.io actually shows. Everything is centred so a narrower page can only trim empty ground."""
+    """1920x344, the wide strip itch.io shows: the ballpark above ground, everything centred."""
     cv = Canvas(480, 86)
-    sky(cv, 30)
-    cv.rect(0, 29, cv.w, 1, col['rim'])
-    grass(cv, 30, 5)
-    strata(cv, 35, 7)
-    tunnel(cv, 0, 42, 480, 36)
-    tunnel(cv, 60, 78, 12, 8)
-    tunnel(cv, 410, 78, 12, 8)
+    sky(cv, 42)
+    gy = stadium(cv, 28)
+    clay(cv, gy + 14)
     lw = spr.names['logo'][2]
     cv.sprite(spr, 'logo', (480 - lw) // 2, 3, 1)
     t = 'A DIGGING ARCADE GAME FOR THE GAMETANK'
     cv.text((480 - tw(t)) // 2, 24, t, col['gold'], 1)
-    cv.sprite(spr, 'rock', 70, 38 - 4, 1)
-    # the cast, centred: 4 sprites of 24, a bat of 36, the boss of 32, gaps of 10
-    total = 24 * 4 + 36 + 32 + 5 * 10
-    x0 = (480 - total) // 2
-    end = cast(cv, x0, 76, gap=10, z=3, with_boss=False)
-    cv.sprite(spr2, 'mascot_0_0', end, 76 - 32, 2)
+    # the title-screen chase along the grass: Doug in front, the Vumpire and a Heater after him
+    y = gy + 13
+    cv.sprite(spr, 'doug_0_0', 290, y - 16, 2)
+    cv.sprite(spr, 'grub_0_0', 254, y - 16, 2)
+    cv.sprite(spr, 'emb_0_0', 218, y - 16, 2)
+    cv.sprite(spr, 'flame0', 212, y - 22, 2)
+    cv.sprite(spr, 'flame1', 232, y - 22, 2)
     K.png_write(os.path.join(OUT, 'banner_1920x344.png'), cv.rgb(4))
 
 
-def banner_tall():
-    """The same idea at 1920x480, in case the page shows a taller banner."""
-    cv = Canvas(480, 120)
-    sky(cv, 34)
-    cv.rect(0, 33, cv.w, 1, col['rim'])
-    grass(cv, 34, 5)
-    strata(cv, 39, 7)
-    tunnel(cv, 0, 56, 480, 42)
-    tunnel(cv, 60, 98, 12, 22)
-    lw = spr.names['logo'][2]
-    cv.sprite(spr, 'logo', (480 - lw) // 2, 5, 1)
-    t = 'A DIGGING ARCADE GAME FOR THE GAMETANK'
-    cv.text((480 - tw(t)) // 2, 26, t, col['gold'], 1)
-    total = 24 * 4 + 36 + 32 + 5 * 10
-    x0 = (480 - total) // 2
-    end = cast(cv, x0, 96, gap=10, z=3, with_boss=False)
-    cv.sprite(spr2, 'mascot_0_0', end, 96 - 32, 2)
-    K.png_write(os.path.join(OUT, 'banner_1920x480.png'), cv.rgb(4))
+def background():
+    """1920x2400 page background: the same night sky and grass line at the top, then the dirt layers all the way down."""
+    cv = Canvas(480, 600)
+    sky(cv, 60)
+    gy = 60
+    for y in range(gy, gy + 14):
+        for x in range(cv.w):
+            cv.put(x, y, col['grass'] if (x // 12) % 2 == 0 else col['grass_d'])
+    cv.rect(0, gy, cv.w, 1, col['white'])
+    strata(cv, gy + 14, 11)
+    K.png_write(os.path.join(OUT, 'background_dirt_1920x2400.png'), cv.rgb(4))
 
 
 # ------------------------------------------------------------- cover ----
@@ -243,7 +289,8 @@ def docs():
 Every colour is taken from the game's own palette. In itch.io: Edit game > Edit theme.
 
 Background colour     %s   (deep navy, the game's ink colour)
-Background image      background_tile.png   (set to tile; leave 'fixed' off)
+Background image      background_dirt_1920x2400.png   (no repeat, top centre: the dirt layers run down both sides of the page)
+                      background_tile.png is a plain dark tiling alternative
 Text colour           %s   (cream)
 Link colour           %s   (mint, the tunnel rim glow)
 Button colour         %s   (gold)
@@ -252,8 +299,8 @@ Panel / sidebar       %s   (slightly lighter navy)
 Border colour         %s   (muted teal)
 
 Font: pick a blocky or monospace option; the game's own type is a 3x5 pixel font.
-Banner: banner_1920x344.png is the wide strip itch.io shows (the logo, tagline and cast are centred inside it).
-banner_1920x480.png is a taller version of the same banner in case the page shows more of it.
+Banner: banner_1920x344.png is the ballpark above ground (stands, light towers, scoreboards, ad wall, striped grass)
+with the logo, tagline and the title-screen chase centred in it. It is the wide strip itch.io shows.
 Cover image: cover_630x500.png (itch.io's recommended cover size).
 """ % (rgbhex(col['ink']), rgbhex(col['cream']), rgbhex(col['rim']), rgbhex(col['gold']), rgbhex(col['ink']),
        rgbhex(col['void']), rgbhex(col['rimlo'])))
@@ -263,8 +310,8 @@ screenshots/   8 real frames captured from the game running in the GameTank emul
                each 1024x1024 (the 128x128 game frame at exact 8x, no smoothing).
                Suggested order on the page: 1-title, 2-digging, 3-heaters, 4-inning5, 5-boss, 6-victory.
 cover_630x500.png        the cover image.
-banner_1920x344.png      the page banner (wide strip).
-banner_1920x480.png      the same banner, taller.
+banner_1920x344.png      the page banner: the ballpark above ground.
+background_dirt_1920x2400.png   page background: sky and grass at the top, then the dirt layers down the sides.
 background_tile.png      tiling page background.
 theme.txt                colours for the itch.io theme editor.
 
@@ -284,5 +331,5 @@ Regenerate:  python3 tools_py/itch_assets.py <shots folder> <output folder>
 """)
 
 
-banner(); banner_tall(); cover(); tile(); shots(); docs()
+banner(); background(); cover(); tile(); shots(); docs()
 print('itch kit written to', OUT)
