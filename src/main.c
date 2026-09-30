@@ -65,6 +65,22 @@ unsigned char new_best;
 unsigned char sbuf[5];
 unsigned char save_peek(unsigned int off);   /* fixed-bank helper, defined at the end */
 
+/* Code banks: PROG0 = gameplay, PROG1 = scenes. Calls between them go through bank_call (fixed bank),
+ * which the compiler inserts for every function declared inside a wrapped-call block. */
+void bank_call(void);
+#pragma wrapped-call (push, bank_call, BANK_PROG1)
+static void title_scene(void);
+static void over_scene(void);
+static void win_scene(void);
+static void attract_scene(void);
+static void intro_scene(void);
+static unsigned char intro_for_level(unsigned char lv);
+#pragma wrapped-call (pop)
+#pragma wrapped-call (push, bank_call, BANK_PROG0)
+static void draw_field(void);
+static void need_page(SpriteSlot* slot, const SpritePage* page);
+#pragma wrapped-call (pop)
+
 /* 0 = tunnel, 1 = dirt, 2 = boulder cell.  16-wide rows so index = r<<4|c.
  * Columns 14/15 and row 13 are permanent solid padding. */
 unsigned char map[(ROWS + 1) * 16];
@@ -278,6 +294,7 @@ static void field_reload(void)
     do { rect.x = (X); rect.y = (Y); rect.w = (W); rect.h = (H); \
          rect.gx = (GX); rect.gy = (GY); rect.b = (sl); queue_draw_sprite_rect(); } while (0)
 
+#pragma code-name (push, "CODE")     /* shared by every bank, so it lives in the fixed one */
 static void text(unsigned char x, unsigned char y, const char* s, unsigned char set)
 {
     unsigned char ch, idx, cell, gx, gy;
@@ -309,6 +326,7 @@ static void text_center(unsigned char y, const char* s, unsigned char set)
 {
     text(64 - (text_w(s) >> 1), y, s, set);
 }
+#pragma code-name (pop)
 
 static void banner(const char* a, const char* b)
 {
@@ -1132,7 +1150,11 @@ static void new_game(void)
 {
     level = 1; lives = 3; score_h = 0; next_life_h = 300;
     hi_at_start = hi_h; new_best = 0;
+#ifdef FIXED_SEED
+    run_seed = FIXED_SEED;                        /* regression builds: same caves every run */
+#else
     run_seed = ((((unsigned int)vsync_ctr << 8) ^ frame_ct ^ (idle_t * 251u)) ^ lfsr) | 1u;   /* new caves every game */
+#endif
     score_dirty = 1;
     build_level();
     state = ST_INTRO; state_timer = 0; icur = 0;
@@ -1233,9 +1255,8 @@ static void frame_end(void)
     music_poll();
 }
 
-/* The whole-screen scenes live in the fixed ROM bank: PROG0 is full, and they are only ever
- * called from game code while PROG0 is mapped in, so calls in both directions just work. */
-#pragma code-name (push, "CODE")
+/* The whole-screen scenes live in their own bank, PROG1. The game loop reaches them through bank_call. */
+#pragma code-name (push, "PROG1")
 
 static void plaque(unsigned char x, unsigned char y, unsigned char w, unsigned char h)
 {
@@ -1266,6 +1287,8 @@ static void title_scene(void)
 
 /* ---- high score: kept in the cartridge's flash save sector ------------------------------
  * layout: 0x44 0x55 lo hi check.  A blank/never-written sector fails the magic and is ignored. */
+#pragma code-name (pop)
+#pragma code-name (push, "CODE")           /* the save code stays in the fixed bank */
 static void load_hiscore(void)
 {
     unsigned char lo, hi;
@@ -1292,6 +1315,8 @@ static void save_hiscore_if_needed(void)
 }
 
 /* bottom plaque shared by the win and game over screens: score / best, then PRESS START */
+#pragma code-name (pop)
+#pragma code-name (push, "PROG1")
 static void score_plaque(void)
 {
     queue_draw_box(1, 108, 126, 12, COL_INK);
@@ -1357,6 +1382,7 @@ static void win_scene(void)
 
 #pragma code-name (pop)
 /* Idle at the title long enough and the enemies introduce themselves, one at a time. */
+#pragma code-name (push, "PROG1")
 static void attract_scene(void)
 {
     static const char* const names[5] = { "VUMPIRE", "HEATER", "BASEBALL BAT", "GROUNDSKEEPER", "MAD SCOTT" };
@@ -1383,8 +1409,9 @@ static void attract_scene(void)
         text(28, y + 6, descs[i], 0);
     }
 }
+#pragma code-name (pop)
 
-#pragma code-name (push, "CODE")
+#pragma code-name (push, "PROG1")
 
 /* Every time an inning brings a new kind of enemy, a short screen introduces it. */
 static const char* const I_TITLE[5] = { "WARNING!", "NEW ARRIVAL!", "INCOMING!", "HEADS UP!", "FINAL INNING!" };
