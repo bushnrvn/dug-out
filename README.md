@@ -50,7 +50,7 @@ All art is authored as code + ASCII pixel art in `tools_py/make_assets.py` and q
 |---|---|
 | `assets/end/end.bmp` | Full-screen ending art (built by script), shown after inning 9 with fireworks and confetti on top. |
 | `assets/over/over.bmp` | Full-screen game over art (built by script): night stadium, moon, and a giant Vumpire umpire calling you out. |
-| `src/main.c` | The whole game (state machine, grid logic, enemy behavior, rendering). Lives in banked ROM (`PROG0`); a tiny `main()` stub switches the bank in. |
+| `src/main.c` | The whole game (state machine, grid logic, enemy behavior, rendering), split across four code banks: `PROG0` gameplay and the main loop, `PROG1` scenes (title, intro, attract, victory, game over), `PROG2` enemies (behavior, contact, drawing), and the fixed bank for shared helpers and the SDK. Calls between banks go through the `bank_call` trampoline (`src/bank_call.s`) via cc65's `wrapped-call`. |
 | `tools_py/make_assets.py` | Generates `assets/bg/bg.bmp`, `assets/spr/spr.bmp` and `src/gen_art.h` (sprite coordinates, palette constants, tunnel tiles). |
 | `tools_py/make_audio.py` | Generates the `.sfx` effects and MIDI songs in `assets/audio/`. |
 | `src/gt/`, `modules/`, `scripts/`, `makefile` | The GameTank SDK (lightly modified: a `vsync_ctr` NMI counter for a steady 30 fps loop). |

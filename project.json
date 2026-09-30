@@ -1,7 +1,7 @@
 {
     "title" : "Dug Out",
     "romname" : "dugout.gtr",
-    "progbanks" : 2,
+    "progbanks" : 3,
     "modules" : [
         "PERSIST",
         "RANDOM",

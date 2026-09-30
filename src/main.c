@@ -76,6 +76,11 @@ static void attract_scene(void);
 static void intro_scene(void);
 static unsigned char intro_for_level(unsigned char lv);
 #pragma wrapped-call (pop)
+#pragma wrapped-call (push, bank_call, BANK_PROG2)       /* PROG2 = the enemies: behaviour, contact and drawing */
+static void enemies_update_all(void);
+static unsigned char enemies_touch_player(void);
+static void enemies_draw_all(void);
+#pragma wrapped-call (pop)
 #pragma wrapped-call (push, bank_call, BANK_PROG0)
 static void draw_field(void);
 static void need_page(SpriteSlot* slot, const SpritePage* page);
@@ -128,6 +133,7 @@ static void add_popup(unsigned char x, unsigned char y, unsigned int v)
 static const unsigned int rock_pts[6] = { 10, 25, 40, 60, 80, 100 };   /* hundreds */
 
 /* ---------------------------------------------------------------- utils -- */
+#pragma code-name (push, "CODE")     /* used from every bank */
 static unsigned char rng(void)
 {
     unsigned char i;
@@ -143,6 +149,7 @@ static unsigned char absdiff(unsigned char a, unsigned char b)
 {
     return a > b ? a - b : b - a;
 }
+#pragma code-name (pop)
 
 static void fmt_score(char* s, unsigned int v)
 {
@@ -173,6 +180,7 @@ static void add_score(unsigned int h)
 static unsigned char dirty_flag[(ROWS + 1) * 16];
 static unsigned char dirty_list[40], dirty_n, refresh_all;
 
+#pragma code-name (push, "CODE")
 static void mark_dirty(signed char c, signed char r)
 {
     unsigned char idx;
@@ -196,6 +204,7 @@ static void mark_restore(unsigned char c, unsigned char r)
 {
     if (rest_n < 16) rest_list[rest_n++] = (r << 4) | c;
 }
+#pragma code-name (pop)
 
 static void restore_cell(unsigned char idx)
 {
@@ -609,8 +618,8 @@ static void player_update(void)
 }
 
 /* -------------------------------------------------------------- enemies -- */
-/* (this section lives in the fixed bank: PROG0 is full) */
-#pragma code-name (push, "CODE")
+/* (this section lives in its own bank, PROG2) */
+#pragma code-name (push, "PROG2")
 
 static unsigned char open_cell(signed char c, signed char r)
 {
@@ -664,7 +673,6 @@ static unsigned char orb_hits_player(unsigned char i)
     return 0;
 }
 
-#pragma code-name (pop)
 
 static unsigned char line_clear(unsigned char c, unsigned char r, unsigned char dir, unsigned char len)
 {
@@ -884,6 +892,27 @@ static unsigned char flame_hits_player(unsigned char i)
     return (px + 8 > fx && px + 2 < e_x[i]);
 }
 
+static void enemies_update_all(void)
+{
+    unsigned char i;
+    for (i = 0; i < MAXE; ++i)
+        if (e_state[i] != ES_NONE) enemy_update(i);
+}
+
+static unsigned char enemies_touch_player(void)
+{
+    unsigned char i, k;
+    for (i = 0; i < MAXE; ++i) {
+        k = e_state[i];
+        if ((k == ES_WALK || k == ES_GHOST || k == ES_FLAME) && e_type[i] != 3) {
+            if (absdiff(e_x[i], px) < 6 && absdiff(e_y[i], py) < 6) return 1;
+            if (flame_hits_player(i) || orb_hits_player(i)) return 1;
+        }
+    }
+    return 0;
+}
+#pragma code-name (pop)
+
 /* -------------------------------------------------------------- boulders -- */
 static void rocks_update(void)
 {
@@ -987,6 +1016,7 @@ static void draw_ball(void)
     queue_draw_box(bx + 1, by + 1, 2, 1, COL_FLAME3);                                     /* seam */
 }
 
+#pragma code-name (push, "PROG2")
 static void draw_mark(unsigned char i, unsigned char x, unsigned char y)
 {
     /* strike marks: X1 white, X2 yellow, X3 red (Mad Scott: X1..X5 in the same colours) */
@@ -1067,6 +1097,14 @@ static void draw_enemy(unsigned char i)
     }
 }
 
+static void enemies_draw_all(void)
+{
+    unsigned char i;
+    for (i = 0; i < MAXE; ++i)
+        if (e_state[i] != ES_NONE) draw_enemy(i);
+}
+#pragma code-name (pop)
+
 static void draw_player(void)
 {
     unsigned char x = FX + px, y = FY + py, f;
@@ -1138,8 +1176,7 @@ static void draw_world(void)
     for (i = 0; i < MAXC; ++i)
         if (c_on[i]) BLIT(slot_spr, FX + c_x[i], FY + c_y[i], 8, 8, SP_TOMB_X, SP_TOMB_Y);
     draw_ball();
-    for (i = 0; i < MAXE; ++i)
-        if (e_state[i] != ES_NONE) draw_enemy(i);
+    enemies_draw_all();
     draw_player();
     draw_popups();
     draw_hud();
@@ -1196,17 +1233,10 @@ static void play_update(void)
             }
         }
     }
-    for (i = 0; i < MAXE; ++i)
-        if (e_state[i] != ES_NONE) enemy_update(i);
+    enemies_update_all();
 
     /* deadly contact */
-    for (i = 0; i < MAXE; ++i) {
-        k = e_state[i];
-        if ((k == ES_WALK || k == ES_GHOST || k == ES_FLAME) && e_type[i] != 3) {
-            if (absdiff(e_x[i], px) < 6 && absdiff(e_y[i], py) < 6) { kill_player(); return; }
-            if (flame_hits_player(i) || orb_hits_player(i)) { kill_player(); return; }
-        }
-    }
+    if (enemies_touch_player()) { kill_player(); return; }
     for (i = 0; i < MAXR; ++i) {
         if (r_on[i] && r_state[i] == RS_FALL &&
             absdiff(px, r_c[i] << 3) < 7 && absdiff(py, r_y[i]) < 7) {
