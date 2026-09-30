@@ -22,8 +22,7 @@ Current version: see `VERSION` and `CHANGELOG.md`. The ROM for each release is i
 * **Heaters** (inning 2+) breathe fire along a straight tunnel after a short wind-up (watch for the blink), and two fireballs circle each one, so keep your distance and throw.
 * **Baseball Bats** (inning 3+) are winged baseballs that fly straight through dirt at Doug. They wait a few
   seconds at the start of each inning, and your throws can hit them even inside dirt.
-* **Groundskeepers** (inning 5+) are harmless. They wander the tunnels and rake them shut behind them
-  (and don't count toward clearing the inning), so they're a nuisance, not a threat. Strike one out for points.
+* **Groundskeepers** (inning 5+) are no threat to Doug's life, but they wander the tunnels and rake them shut behind them, taking back the points those blocks paid. They count toward clearing the inning, so strike them out too.
 * **The final inning** is a single boss, **Mad Scott**: a huge slow foam-head that smashes a tunnel through the dirt straight at you and takes six
   strikes (a home plate counts as three). Beat it to win.
 * Deeper critters and multi-kill boulders score more. Tunnelling pays too: 10, 20, 30 or 40 points per block by depth, and the Groundskeeper takes back exactly that when it rakes a block shut. Extra life every 30,000.

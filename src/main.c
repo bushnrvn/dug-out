@@ -445,8 +445,7 @@ static void build_level(void)
     if (level >= 3) e_type[ne - 1] = 2;          /* a baseball bat joins from inning 3 */
     if (level >= 5 && ne >= 5) e_type[ne - 2] = 3; /* a Groundskeeper from inning 5 */
     if (level >= INNINGS) e_type[0] = 4;
-    /* the Groundskeeper is a nuisance, not a target: it doesn't count toward clearing the inning */
-    enemies_left = ne - ((level >= 5 && ne >= 5 && level < INNINGS) ? 1 : 0);
+    enemies_left = ne;                          /* every enemy, the Groundskeeper included, must be struck out */
 
     /* boulders */
     for (i = 0; i < MAXR; ++i) r_on[i] = 0;
@@ -532,7 +531,7 @@ static void strike(unsigned char k)
         add_score(pts);
         add_popup(e_x[k], e_y[k], pts);
         if (e_type[k] == 0) add_corpse(k);      /* Vumpires can be raised again; crushed ones can't */
-        if (e_type[k] != 3) --enemies_left;
+        --enemies_left;
     } else {
         SFXP(e_infl[k] == 1 ? ASSET__audio__pump1_sfx_ID : ASSET__audio__pump2_sfx_ID, 1);
     }
@@ -991,7 +990,7 @@ static void rocks_update(void)
                     add_score(rock_pts[r_kills[i] < 5 ? r_kills[i] : 5]);
                     add_popup(e_x[k], e_y[k] > 8 ? e_y[k] - 8 : 0, rock_pts[r_kills[i] < 5 ? r_kills[i] : 5]);
                     ++r_kills[i];
-                    if (e_type[k] != 3) --enemies_left;
+                    --enemies_left;
                     SFXP(ASSET__audio__squash_sfx_ID, 3);
                 }
             }
@@ -1273,7 +1272,7 @@ static void play_update(void)
 
     if (enemies_left == 0) {
         unsigned char alive = 0;
-        for (i = 0; i < MAXE; ++i) if (e_state[i] != ES_NONE && e_type[i] != 3) alive = 1;
+        for (i = 0; i < MAXE; ++i) if (e_state[i] != ES_NONE) alive = 1;
         if (!alive) {
             state = ST_CLEAR; state_timer = 0;
             stop_music();
@@ -1443,7 +1442,7 @@ static void attract_scene(void)
 {
     static const char* const names[5] = { "VUMPIRE", "HEATER", "BASEBALL BAT", "GROUNDSKEEPER", "MAD SCOTT" };
     static const char* const descs[5] = { "RAISES THE FALLEN", "BREATHES FIRE",
-                                          "FLIES THROUGH DIRT", "JUST CLOSES TUNNELS",
+                                          "FLIES THROUGH DIRT", "RAKES TUNNELS SHUT",
                                           "BOSS. SIX STRIKES" };
     unsigned char i, y, f = (frame_ct >> 2) & 1, shown = (unsigned char)(scene_t / 50) + 1;
     draw_field();

@@ -5,6 +5,7 @@ Versions follow MAJOR.MINOR.PATCH. The current version is in `VERSION`. Each rel
 ## 1.3.0 (in progress)
 * Scoring: tunnelling pays 10, 20, 30 or 40 points per block, matching the four depth bands that enemy kills use. The score now keeps a tens digit.
 * The Groundskeeper takes back exactly what a block paid when it rakes the block shut. Blocks Doug did not dig (the enemy pockets, or tunnels the boss smashed) cost nothing, and the score never drops below zero.
+* Groundskeepers now count toward clearing the inning: strike them out (or crush them) like every other enemy.
 * Code split: the scenes and the enemy code move into their own code banks (`PROG1`, `PROG2`), leaving room for new features.
 * Fix: the vsync counter no longer loses ticks while the draw queue's RAM bank is mapped, so frame timing and music tempo are exact on busy screens.
 
