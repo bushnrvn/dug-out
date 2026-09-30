@@ -1315,8 +1315,12 @@ static void win_scene(void)
         y = 8 + (unsigned char)((((unsigned)t * (1 + (i & 3)) >> 1) + i * 11) % 104);
         queue_draw_box(x, y, 2, 3, conf[i % 5]);
     }
+    y = new_best ? 22 : 13;                         /* solid plate so the text stays readable on a real LCD */
+    queue_draw_box(14, 34, 100, y, COL_INK);
+    queue_draw_box(15, 35, 98, 1, COL_RIM);
+    queue_draw_box(15, 33 + y, 98, 1, COL_RIM);
     text_center(37, "NINE INNINGS COMPLETE", 1);
-    if (new_best && (frame_ct & 16)) text_center(46, "NEW BEST SCORE!", 1);
+    if (new_best && (frame_ct & 16)) text_center(46, "NEW BEST SCORE!", 0);
     score_plaque();
 }
 
