@@ -146,7 +146,7 @@ def plate(cv, x, y, w, h):
 CROWD = [P[k] for k in ('sun', 'white', 'b2c', 'gem', 'hat', 'vred', 'skin', 'b3c', 'flame2')]
 
 
-def stadium(cv, top=28):
+def stadium(cv, top=28, towers=None, poles=None):
     """the ballpark above the dirt, as in the game: stands, light towers, scoreboards, foul poles, ad wall, striped grass."""
     W = cv.w
     # stands: rows of crowd, each row split by a dark gap
@@ -157,7 +157,7 @@ def stadium(cv, top=28):
             else:
                 cv.put(x, y, rnd.choice(CROWD) if rnd.random() < 0.62 else col['b3a'])
     # light towers with lamp heads
-    for tx in (100, W - 100):
+    for tx in (towers or (100, W - 100)):
         cv.rect(tx, 6, 2, top + 18, col['lamp'])
         cv.rect(tx - 7, 3, 16, 7, col['lamp'])
         for i in range(4):
@@ -180,7 +180,7 @@ def stadium(cv, top=28):
         cv.rect(x, wy + 2, 16, 4, ads[i % len(ads)])
         cv.rect(x + 2, wy + 3, 12, 1, col['b4a'])
     # foul poles
-    for fx in (22, W - 24):
+    for fx in (poles or (22, W - 24)):
         cv.rect(fx, 16, 2, wy - 14, col['gold'])
     # striped grass and a chalk line
     gy = wy + 7
@@ -234,20 +234,23 @@ def background():
 
 # ------------------------------------------------------------- cover ----
 def cover():
+    """630x500: the ballpark above ground, the dirt layers below with a tunnel and the cast."""
     cv = Canvas(158, 125)
-    sky(cv, 34)
-    cv.rect(0, 33, cv.w, 1, col['rim'])
-    grass(cv, 34, 5)
-    strata(cv, 39, 3)
-    cv.sprite(spr, 'logo', 35, 4, 1)
-    cv.text(79 - tw('NINE INNINGS. ONE BOSS.') // 2, 25, 'NINE INNINGS. ONE BOSS.', col['gold'], 1)
-    tunnel(cv, 0, 56, 158, 40)
-    tunnel(cv, 18, 96, 12, 14)
-    cast(cv, 8, 92, gap=3, z=2, with_boss=False)
-    cv.sprite(spr2, 'mascot_0_0', 122, 92 - 32, 2)
-    plate(cv, 6, 101, 146, 20)
-    cv.text(79 - tw('DIG. THROW. STRIKE THEM OUT.') // 2, 104, 'DIG. THROW. STRIKE THEM OUT.', col['cream'], 1)
-    cv.text(79 - tw('PLAYS IN YOUR BROWSER') // 2, 112, 'PLAYS IN YOUR BROWSER', col['gold'], 1)
+    sky(cv, 40)
+    gy = stadium(cv, 28, towers=(9, 146), poles=(3, 153))
+    gy_end = gy + 14                                     # first row below the grass
+    strata(cv, gy_end, 2)
+    cv.rect(0, gy_end, cv.w, 1, col['cream'])
+    lw = spr.names['logo'][2]
+    cv.sprite(spr, 'logo', (158 - lw) // 2, 3, 1)
+    t = 'NINE INNINGS. ONE BOSS.'
+    cv.text((158 - tw(t)) // 2, 24, t, col['gold'], 1)
+    tunnel(cv, 0, 76, 158, 36)                           # tall enough for the boss at 2x
+    cast(cv, 7, 109, gap=3, z=2, with_boss=False)
+    cv.sprite(spr2, 'mascot_0_0', 122, 109 - 32, 2)
+    plate(cv, 18, 114, 122, 9)
+    t2 = 'PLAYS IN YOUR BROWSER'
+    cv.text(79 - tw(t2) // 2, 116, t2, col['gold'], 1)
     rows = cv.rgb(4)
     K.png_write(os.path.join(OUT, 'cover_630x500.png'), [r[:630] for r in rows[:500]])
 
