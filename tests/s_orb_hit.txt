@@ -1,0 +1,172 @@
+320 START
+323 0
+600 poke level 1
+600 poke enemies_left 0
+600 poke e_state 0 0
+600 poke e_state 0 1
+600 poke e_state 0 2
+2299 peek state 1
+2299 peek e_type 1
+2299 peek e_state 1
+2300 poke px 88
+2300 poke py 63
+2300 poke e_x 88 1
+2300 poke e_y 72 1
+2301 poke px 88
+2301 poke py 63
+2301 poke e_x 88 1
+2301 poke e_y 72 1
+2302 poke px 88
+2302 poke py 63
+2302 poke e_x 88 1
+2302 poke e_y 72 1
+2303 poke px 88
+2303 poke py 63
+2303 poke e_x 88 1
+2303 poke e_y 72 1
+2304 poke px 88
+2304 poke py 63
+2304 poke e_x 88 1
+2304 poke e_y 72 1
+2305 poke px 88
+2305 poke py 63
+2305 poke e_x 88 1
+2305 poke e_y 72 1
+2306 poke px 88
+2306 poke py 63
+2306 poke e_x 88 1
+2306 poke e_y 72 1
+2307 poke px 88
+2307 poke py 63
+2307 poke e_x 88 1
+2307 poke e_y 72 1
+2308 poke px 88
+2308 poke py 63
+2308 poke e_x 88 1
+2308 poke e_y 72 1
+2309 poke px 88
+2309 poke py 63
+2309 poke e_x 88 1
+2309 poke e_y 72 1
+2310 poke px 88
+2310 poke py 63
+2310 poke e_x 88 1
+2310 poke e_y 72 1
+2311 poke px 88
+2311 poke py 63
+2311 poke e_x 88 1
+2311 poke e_y 72 1
+2312 poke px 88
+2312 poke py 63
+2312 poke e_x 88 1
+2312 poke e_y 72 1
+2313 poke px 88
+2313 poke py 63
+2313 poke e_x 88 1
+2313 poke e_y 72 1
+2314 poke px 88
+2314 poke py 63
+2314 poke e_x 88 1
+2314 poke e_y 72 1
+2315 poke px 88
+2315 poke py 63
+2315 poke e_x 88 1
+2315 poke e_y 72 1
+2316 poke px 88
+2316 poke py 63
+2316 poke e_x 88 1
+2316 poke e_y 72 1
+2317 poke px 88
+2317 poke py 63
+2317 poke e_x 88 1
+2317 poke e_y 72 1
+2318 poke px 88
+2318 poke py 63
+2318 poke e_x 88 1
+2318 poke e_y 72 1
+2319 poke px 88
+2319 poke py 63
+2319 poke e_x 88 1
+2319 poke e_y 72 1
+2320 poke px 88
+2320 poke py 63
+2320 poke e_x 88 1
+2320 poke e_y 72 1
+2321 poke px 88
+2321 poke py 63
+2321 poke e_x 88 1
+2321 poke e_y 72 1
+2322 poke px 88
+2322 poke py 63
+2322 poke e_x 88 1
+2322 poke e_y 72 1
+2323 poke px 88
+2323 poke py 63
+2323 poke e_x 88 1
+2323 poke e_y 72 1
+2324 poke px 88
+2324 poke py 63
+2324 poke e_x 88 1
+2324 poke e_y 72 1
+2325 poke px 88
+2325 poke py 63
+2325 poke e_x 88 1
+2325 poke e_y 72 1
+2326 poke px 88
+2326 poke py 63
+2326 poke e_x 88 1
+2326 poke e_y 72 1
+2327 poke px 88
+2327 poke py 63
+2327 poke e_x 88 1
+2327 poke e_y 72 1
+2328 poke px 88
+2328 poke py 63
+2328 poke e_x 88 1
+2328 poke e_y 72 1
+2329 poke px 88
+2329 poke py 63
+2329 poke e_x 88 1
+2329 poke e_y 72 1
+2330 poke px 88
+2330 poke py 63
+2330 poke e_x 88 1
+2330 poke e_y 72 1
+2331 poke px 88
+2331 poke py 63
+2331 poke e_x 88 1
+2331 poke e_y 72 1
+2332 poke px 88
+2332 poke py 63
+2332 poke e_x 88 1
+2332 poke e_y 72 1
+2333 poke px 88
+2333 poke py 63
+2333 poke e_x 88 1
+2333 poke e_y 72 1
+2334 poke px 88
+2334 poke py 63
+2334 poke e_x 88 1
+2334 poke e_y 72 1
+2335 poke px 88
+2335 poke py 63
+2335 poke e_x 88 1
+2335 poke e_y 72 1
+2336 poke px 88
+2336 poke py 63
+2336 poke e_x 88 1
+2336 poke e_y 72 1
+2337 poke px 88
+2337 poke py 63
+2337 poke e_x 88 1
+2337 poke e_y 72 1
+2338 poke px 88
+2338 poke py 63
+2338 poke e_x 88 1
+2338 poke e_y 72 1
+2339 poke px 88
+2339 poke py 63
+2339 poke e_x 88 1
+2339 poke e_y 72 1
+2342 peek state 1
+2350 quit

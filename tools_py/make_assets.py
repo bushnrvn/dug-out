@@ -1307,3 +1307,11 @@ h.append('#define SP_LIFE_X %d\n#define SP_LIFE_Y %d\n' % life_xy)
 h.append('#endif\n')
 open(os.path.join(ROOT, 'src', 'gen_art.h'), 'w').write(''.join(h))
 print('ok; sprite sheet used to y=%d' % (spr.cy + spr.rowh))
+
+# Redrawn art (tools_py/art_kit.py import ...) wins over the generated sheets.
+import shutil
+for _name, _dir in (('spr', 'spr'), ('spr2', 'spr2')):
+    _custom = os.path.join(ROOT, 'art_custom', _name + '.bmp')
+    if os.path.exists(_custom):
+        shutil.copyfile(_custom, os.path.join(ROOT, 'assets', _dir, _name + '.bmp'))
+        print('using custom art for', _name)
