@@ -220,8 +220,8 @@ def banner():
 
 
 def background():
-    """1920x2400 page background: the same night sky and grass line at the top, then the dirt layers all the way down."""
-    cv = Canvas(480, 600)
+    """1920x2160 page background: the same night sky and grass line at the top, then the dirt layers all the way down."""
+    cv = Canvas(480, 540)
     sky(cv, 60)
     gy = 60
     for y in range(gy, gy + 14):
@@ -229,7 +229,7 @@ def background():
             cv.put(x, y, col['grass'] if (x // 12) % 2 == 0 else col['grass_d'])
     cv.rect(0, gy, cv.w, 1, col['white'])
     strata(cv, gy + 14, 11)
-    K.png_write(os.path.join(OUT, 'background_dirt_1920x2400.png'), cv.rgb(4))
+    K.png_write(os.path.join(OUT, 'background_dirt_1920x2160.png'), cv.rgb(4))
 
 
 # ------------------------------------------------------------- cover ----
@@ -292,7 +292,7 @@ def docs():
 Every colour is taken from the game's own palette. In itch.io: Edit game > Edit theme.
 
 Background colour     %s   (deep navy, the game's ink colour)
-Background image      background_dirt_1920x2400.png   (no repeat, top centre: the dirt layers run down both sides of the page)
+Background image      background_dirt_1920x2160.png   (no repeat, top centre: the dirt layers run down both sides of the page)
                       background_tile.png is a plain dark tiling alternative
 Text colour           %s   (cream)
 Link colour           %s   (mint, the tunnel rim glow)
@@ -314,7 +314,7 @@ screenshots/   8 real frames captured from the game running in the GameTank emul
                Suggested order on the page: 1-title, 2-digging, 3-heaters, 4-inning5, 5-boss, 6-victory.
 cover_630x500.png        the cover image.
 banner_1920x344.png      the page banner: the ballpark above ground.
-background_dirt_1920x2400.png   page background: sky and grass at the top, then the dirt layers down the sides.
+background_dirt_1920x2160.png   page background: sky and grass at the top, then the dirt layers down the sides.
 background_tile.png      tiling page background.
 theme.txt                colours for the itch.io theme editor.
 
