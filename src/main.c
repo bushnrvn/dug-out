@@ -46,6 +46,12 @@ enum { DIR_R, DIR_L, DIR_U, DIR_D };
 #define SFX(id) SFXP(id, 0)
 
 static const signed char DX[4] = { 1, -1, 0, 0 };
+#define WINDUP 10           /* frames a Heater stands still before the fire comes out */
+#define FLAME_END 30
+/* two fireballs circle every Heater: offsets of an 8x8 sprite around its owner */
+static const signed char ORB_X[8] = { 0, 6, 9, 6, 0, -6, -9, -6 };
+static const signed char ORB_Y[8] = { -9, -6, 0, 6, 9, 6, 0, -6 };
+#define ORB_K(n) ((unsigned char)(((frame_ct >> 2) + ((n) << 2)) & 7))
 static const signed char DY[4] = { 0, 0, -1, 1 };
 static const unsigned char LEADX[4] = { 8, 0, 4, 4 };
 static const unsigned char LEADY[4] = { 4, 4, 0, 8 };
@@ -603,6 +609,8 @@ static void choose_dir(unsigned char i)
         for (d = 0; d < MAXC; ++d)
             if (c_on[d]) { tc = (c_x[d] + 4) >> 3; tr = (c_y[d] + 4) >> 3; break; }
     }
+    tc += (signed char)(rng() & 7) - 3;          /* aim a few cells off Doug so the routes are not the same every time */
+    tr += (signed char)(rng() & 7) - 3;
     for (d = 0; d < 4; ++d) {
         if (d == rev) continue;
         nc = c + DX[d]; nr = r + DY[d];
@@ -620,9 +628,22 @@ static void choose_dir(unsigned char i)
         e_dir[i] = open_cell(nc, nr) ? rev : cur;
         return;
     }
-    if (n > 1 && rng() < 48) bd = opt[rng() % n];
+    if (n > 1 && rng() < (e_type[i] ? 110 : 80)) bd = opt[rng() % n];
     e_dir[i] = bd;
 }
+
+static unsigned char orb_hits_player(unsigned char i)
+{
+    unsigned char n, k;
+    if (e_type[i] != 1) return 0;
+    for (n = 0; n < 2; ++n) {
+        k = ORB_K(n);
+        if (absdiff((unsigned char)(e_x[i] + ORB_X[k]), px) < 5 && absdiff((unsigned char)(e_y[i] + ORB_Y[k]), py) < 5) return 1;
+    }
+    return 0;
+}
+
+#pragma code-name (pop)
 
 static unsigned char line_clear(unsigned char c, unsigned char r, unsigned char dir, unsigned char len)
 {
@@ -634,8 +655,6 @@ static unsigned char line_clear(unsigned char c, unsigned char r, unsigned char 
     }
     return len;
 }
-
-#pragma code-name (pop)
 
 /* --- Groundskeeper ---------------------------------------------------------------------- */
 static unsigned char gk_ok(signed char c, signed char r)
@@ -754,7 +773,7 @@ static void enemy_update(unsigned char i)
             c = x >> 3; r = y >> 3;
             tc = (px + 4) >> 3; tr = (py + 4) >> 3;
             /* heaters spit fire when lined up with Doug */
-            if (e_type[i] == 1 && r == tr && (tc != c) && rng() < 60) {
+            if (e_type[i] == 1 && r == tr && (tc != c) && rng() < 130) {
                 d = (tc > c) ? DIR_R : DIR_L;
                 if (absdiff(tc, c) <= 5 && line_clear(c, r, d, absdiff(tc, c)) == absdiff(tc, c)) {
                     e_state[i] = ES_FLAME; e_timer[i] = 0; e_face[i] = d;
@@ -824,8 +843,8 @@ static void enemy_update(unsigned char i)
             break;
         }
         ++e_timer[i];
-        if (e_timer[i] == 22) SFXP(ASSET__audio__flame_sfx_ID, 2);
-        if (e_timer[i] > 44) { e_state[i] = ES_WALK; e_acc[i] = 0; }
+        if (e_timer[i] == WINDUP) SFXP(ASSET__audio__flame_sfx_ID, 2);
+        if (e_timer[i] > FLAME_END) { e_state[i] = ES_WALK; e_acc[i] = 0; }
         break;
     }
 }
@@ -834,7 +853,7 @@ static unsigned char flame_hits_player(unsigned char i)
 {
     unsigned char len = e_flen[i] * 8 + 6;
     unsigned char fx;
-    if (e_type[i] != 1 || e_state[i] != ES_FLAME || e_timer[i] < 22) return 0;
+    if (e_type[i] != 1 || e_state[i] != ES_FLAME || e_timer[i] < WINDUP) return 0;
     if (absdiff(e_y[i], py) > 5) return 0;
     if (e_face[i] == DIR_R) {
         fx = e_x[i] + 8;
@@ -961,6 +980,14 @@ static void draw_enemy(unsigned char i)
     unsigned char st = e_state[i], x = FX + e_x[i], y = FY + e_y[i], f, sz, k;
     f = ((frame_ct >> 2) & 1);
     k = e_face[i] * 2 + f;
+    if (e_type[i] == 1 && (st == ES_WALK || st == ES_FLAME)) {      /* the two fireballs circling a Heater */
+        signed int ox, oy;
+        for (sz = 0; sz < 2; ++sz) {
+            ox = (signed int)x + ORB_X[ORB_K(sz)]; oy = (signed int)y + ORB_Y[ORB_K(sz)];
+            if (ox >= 0 && ox < 121 && oy >= 0 && oy < 121)
+                BLIT(slot_spr, (unsigned char)ox, (unsigned char)oy, 8, 8, flame_x[(f + sz) & 1], flame_y[(f + sz) & 1]);
+        }
+    }
     switch (st) {
     case ES_WALK:
         if (e_type[i] == 4) { BLIT(slot_spr2, x - 4, y - 4, 16, 16, mascot_x[k], mascot_y[k]); if (e_infl[i]) draw_mark(i, x, y); }
@@ -977,11 +1004,11 @@ static void draw_enemy(unsigned char i)
             }
             break;
         }
-        if (e_timer[i] < 22 && ((e_timer[i] >> 1) & 1))
+        if (e_timer[i] < WINDUP && ((e_timer[i] >> 1) & 1))
             BLIT(slot_spr, x, y, 8, 8, emb_x[e_face[i] * 2], emb_y[e_face[i] * 2]);
         else
             BLIT(slot_spr, x, y, 8, 8, emb_x[e_face[i] * 2 + 1], emb_y[e_face[i] * 2 + 1]);
-        if (e_timer[i] >= 22) {
+        if (e_timer[i] >= WINDUP) {
             unsigned char n, fx, fr;
             fr = (frame_ct >> 1) & 1;
             for (n = 0; n < e_flen[i]; ++n) {
@@ -1151,7 +1178,7 @@ static void play_update(void)
         k = e_state[i];
         if ((k == ES_WALK || k == ES_GHOST || k == ES_FLAME) && e_type[i] != 3) {
             if (absdiff(e_x[i], px) < 6 && absdiff(e_y[i], py) < 6) { kill_player(); return; }
-            if (flame_hits_player(i)) { kill_player(); return; }
+            if (flame_hits_player(i) || orb_hits_player(i)) { kill_player(); return; }
         }
     }
     for (i = 0; i < MAXR; ++i) {

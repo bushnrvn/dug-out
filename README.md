@@ -21,7 +21,7 @@ Current version: see `VERSION` and `CHANGELOG.md`. The ROM for each release is i
 * Every hit is a **strike**: X1 in white, X2 in yellow, and the third (X3, red) is an out. Leave an enemy alone and its strikes wear off.
 * Dig out from under a home plate and it wobbles, then falls. It crushes anything below - **including Doug**.
 * **Vumpires** walk the tunnels and can **raise fallen Vumpires**: a struck-out Vumpire leaves a headstone, and a living Vumpire that reaches it brings it back - unless every Vumpire is gone. Stomp a headstone to stop it. Home plates finish them for good.
-* **Heaters** (inning 2+) breathe fire along a straight tunnel - they wind up first, so watch for the blink.
+* **Heaters** (inning 2+) breathe fire along a straight tunnel after a short wind-up (watch for the blink), and two fireballs circle each one, so keep your distance and throw.
 * **Baseball Bats** (inning 3+) are winged baseballs that fly straight through dirt at Doug. They wait a few
   seconds at the start of each inning, and your throws can hit them even inside dirt.
 * **Groundskeepers** (inning 5+) are harmless. They wander the tunnels and rake them shut behind them
