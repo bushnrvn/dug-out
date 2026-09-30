@@ -1,8 +1,6 @@
 # DUG OUT
 
-A GameTank game. You are **Doug**, a ballplayer who digs under the ballpark.
-Tunnel through the strata, strike the critters living down there out with your fastball,
-and drop home plates on the rest. Mechanically it's Dig Dug-like; visually and in the combat it isn't.
+A spooky homage to DigDug about baseball for the Gametank. Works ih an emulator and real hardware.
 
 ## Play
 
