@@ -191,6 +191,34 @@ def stadium(cv, top=28, towers=None, poles=None):
     return gy
 
 
+def line(cv, x0, y0, x1, y1, c):
+    dx, dy = abs(x1 - x0), -abs(y1 - y0)
+    sx, sy = (1 if x0 < x1 else -1), (1 if y0 < y1 else -1)
+    err = dx + dy
+    while True:
+        cv.put(x0, y0, c)
+        if x0 == x1 and y0 == y1:
+            break
+        e2 = 2 * err
+        if e2 >= dy: err += dy; x0 += sx
+        if e2 <= dx: err += dx; y0 += sy
+
+
+def diamonds(cv, gy, centre, spacing=96, reach=400):
+    """chalked ball diamonds with bases and a pitcher's mound, repeating along the field; one is centred on `centre`."""
+    hw, top, bot, mid = 20, gy + 2, gy + 12, gy + 7
+    for m in range(-(reach // spacing) - 1, reach // spacing + 2):
+        cx = centre + m * spacing
+        if cx + hw < 0 or cx - hw >= cv.w:
+            continue
+        for a, b in (((cx - hw, mid), (cx, top)), ((cx, top), (cx + hw, mid)),
+                     ((cx + hw, mid), (cx, bot)), ((cx, bot), (cx - hw, mid))):
+            line(cv, a[0], a[1], b[0], b[1], col['white'])
+        for bx, by in ((cx - hw, mid), (cx + hw, mid), (cx, top), (cx, bot)):          # the bases
+            cv.rect(bx - 1, by - 1, 3, 3, col['cream'])
+        cv.rect(cx - 1, mid - 1, 3, 3, col['b1a'])                                      # the pitcher's mound
+
+
 def clay(cv, y0):
     for y in range(y0, cv.h):
         for x in range(cv.w):
@@ -204,6 +232,7 @@ def banner():
     cv = Canvas(480, 86)
     sky(cv, 42)
     gy = stadium(cv, 28)
+    diamonds(cv, gy, 240)
     clay(cv, gy + 14)
     lw = spr.names['logo'][2]
     cv.sprite(spr, 'logo', (480 - lw) // 2, 3, 1)
@@ -220,16 +249,20 @@ def banner():
 
 
 def background():
-    """1920x2160 page background: the same night sky and grass line at the top, then the dirt layers all the way down."""
-    cv = Canvas(480, 540)
-    sky(cv, 60)
-    gy = 60
+    """1920x2160 page background, drawn with the same 'native pixel' geometry as the banner but at 2px per pixel.
+    itch.io stretches the page background about 1.35x while the banner shows at about 0.69x, so the two end up with
+    the same on-screen pixel size (2.7px), the grass lines up with the banner's, and the diamonds carry on to the page edges."""
+    cv = Canvas(960, 1080)
+    gy = 58                                              # the banner's grass line, measured on the live page
+    sky(cv, gy)
     for y in range(gy, gy + 14):
         for x in range(cv.w):
             cv.put(x, y, col['grass'] if (x // 12) % 2 == 0 else col['grass_d'])
     cv.rect(0, gy, cv.w, 1, col['white'])
+    diamonds(cv, gy, 480, reach=520)
     strata(cv, gy + 14, 11)
-    K.png_write(os.path.join(OUT, 'background_dirt_1920x2160.png'), cv.rgb(4))
+    cv.rect(0, gy + 14, cv.w, 1, col['cream'])
+    K.png_write(os.path.join(OUT, 'background_dirt_1920x2160.png'), cv.rgb(2))
 
 
 # ------------------------------------------------------------- cover ----
