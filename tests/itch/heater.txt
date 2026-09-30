@@ -1,0 +1,9 @@
+320 START
+323 0
+600 poke level 1
+600 poke enemies_left 0
+600 poke e_state 0 0
+600 poke e_state 0 1
+600 poke e_state 0 2
+1800 shot heater
+1810 quit

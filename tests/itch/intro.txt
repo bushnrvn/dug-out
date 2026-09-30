@@ -1,0 +1,4 @@
+320 START
+323 0
+520 shot intro
+560 quit
