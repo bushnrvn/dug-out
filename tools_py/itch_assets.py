@@ -303,7 +303,7 @@ Banner: banner_1920x344.png is the ballpark above ground (stands, light towers, 
 with the logo, tagline and the title-screen chase centred in it. It is the wide strip itch.io shows.
 Cover image: cover_630x500.png (itch.io's recommended cover size).
 """ % (rgbhex(col['ink']), rgbhex(col['cream']), rgbhex(col['rim']), rgbhex(col['gold']), rgbhex(col['ink']),
-       rgbhex(col['void']), rgbhex(col['rimlo'])))
+       rgbhex(col['voidhi']), rgbhex(col['rimlo'])))
     open(os.path.join(OUT, 'README-ITCH.txt'), 'w').write("""WHAT IS IN HERE
 
 screenshots/   8 real frames captured from the game running in the GameTank emulator (version 1.3.0),
