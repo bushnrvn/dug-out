@@ -1,6 +1,6 @@
 # DUG OUT
 
-A spooky homage to DigDug about baseball for the Gametank. Works ih an emulator and real hardware.
+A spooky homage to DigDug about baseball for the Gametank. Works in an emulator and real hardware.
 
 ## Play
 
