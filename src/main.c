@@ -65,6 +65,9 @@ unsigned char new_best;
 unsigned char sbuf[5];
 unsigned char save_peek(unsigned int off);   /* fixed-bank helper, defined at the end */
 
+/* every vsync, counted by the NMI handler in shared audio RAM so none are lost while the draw queue's RAM bank is mapped */
+#define vsync_raw (*(volatile unsigned char*)0x3210)
+
 /* Code banks: PROG0 = gameplay, PROG1 = scenes. Calls between them go through bank_call (fixed bank),
  * which the compiler inserts for every function declared inside a wrapped-call block. */
 void bank_call(void);
@@ -1190,7 +1193,7 @@ static void new_game(void)
 #ifdef FIXED_SEED
     run_seed = FIXED_SEED;                        /* regression builds: same caves every run */
 #else
-    run_seed = ((((unsigned int)vsync_ctr << 8) ^ frame_ct ^ (idle_t * 251u)) ^ lfsr) | 1u;   /* new caves every game */
+    run_seed = ((((unsigned int)vsync_raw << 8) ^ frame_ct ^ (idle_t * 251u)) ^ lfsr) | 1u;   /* new caves every game */
 #endif
     score_dirty = 1;
     build_level();
@@ -1263,8 +1266,8 @@ static unsigned char last_flip, last_tick;
  * so a slow frame can't make the notes bunch up. */
 static void music_poll(void)
 {
-    unsigned char n = (unsigned char)(vsync_ctr - last_tick);
-    if (n > 4) { last_tick = vsync_ctr - 4; n = 4; }
+    unsigned char n = (unsigned char)(vsync_raw - last_tick);
+    if (n > 4) { last_tick = vsync_raw - 4; n = 4; }
     while (n) { ++last_tick; tick_music(); --n; }
 }
 
@@ -1275,13 +1278,13 @@ static void frame_end(void)
     await_draw_queue();
     music_poll();
     for (;;) {
-        v = vsync_ctr;
-        while (vsync_ctr == v) { }                                   /* wait for the next vsync */
-        if ((unsigned char)(vsync_ctr - last_flip) >= FRAME_VSYNCS) break;
+        v = vsync_raw;
+        while (vsync_raw == v) { }                                   /* wait for the next vsync */
+        if ((unsigned char)(vsync_raw - last_flip) >= FRAME_VSYNCS) break;
         music_poll();                                                /* the in-between vsync */
     }
     flip_pages();
-    last_flip = vsync_ctr;
+    last_flip = vsync_raw;
     music_poll();
 }
 
@@ -1489,6 +1492,7 @@ void game_main(void)
 {
     unsigned char i;
 
+    last_tick = last_flip = vsync_raw;
     slot_bg = allocate_sprite(&ASSET__bg__bg_bmp_load_list);
     slot_spr = allocate_sprite(&ASSET__spr__spr_bmp_load_list);
 

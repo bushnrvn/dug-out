@@ -60,6 +60,12 @@ viaWakeup:
 	STA $1FFF
 	STZ BankReg
 	STZ $1FFF
+	; mark RAM bank 1 (the draw queue's) so the NMI handler can tell when it is mapped in
+	LDA #$40
+	STA BankReg
+	LDA #1
+	STA $1FFF
+	STZ BankReg
 
 	LDA #%00000111
 	STA VIA+DDRA
