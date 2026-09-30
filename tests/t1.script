@@ -1,0 +1,11 @@
+# frame  action
+300 shot /tmp/dd_title.bmp
+320 START
+323 0
+420 shot /tmp/dd_ready.bmp
+560 shot /tmp/dd_play1.bmp
+560 DOWN
+700 shot /tmp/dd_play2.bmp
+700 RIGHT
+820 shot /tmp/dd_play3.bmp
+830 quit

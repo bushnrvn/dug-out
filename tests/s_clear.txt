@@ -1,0 +1,12 @@
+320 START
+323 0
+600 poke enemies_left 0
+600 poke e_state 0 0
+600 poke e_state 0 1
+600 poke e_state 0 2
+640 peek state 1
+900 shot c2
+905 shot c3
+915 shot c4
+940 shot c5
+1000 quit

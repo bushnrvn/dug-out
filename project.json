@@ -1,0 +1,13 @@
+{
+    "title" : "Dug Out",
+    "romname" : "dugout.gtr",
+    "progbanks" : 1,
+    "modules" : [
+        "PERSIST",
+        "RANDOM",
+        "TEXT",
+        "DRAWQUEUE",
+        "PADDLEINPUT",
+        "AUDIO_DEFAULT_FM"
+    ]
+}

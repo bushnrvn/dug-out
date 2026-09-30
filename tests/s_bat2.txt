@@ -1,0 +1,18 @@
+320 START
+323 0
+500 START
+503 0
+900 poke level 2
+900 poke enemies_left 0
+900 poke e_state 0 0
+900 poke e_state 0 1
+900 poke e_state 0 2
+900 poke e_state 0 3
+2000 peek state 1
+2000 peek level 1
+2000 poke e_timer 200 4
+2000 poke e_x 72 4
+2000 poke e_y 32 4
+2004 shot bb
+2006 shot bc
+2050 quit

@@ -1,0 +1,13 @@
+320 START
+323 0
+500 START
+503 0
+900 poke lives 1
+900 poke score_h 250
+900 poke state 3
+900 poke state_timer 0
+1200 peek state 1
+1200 shot o1
+1230 shot o2
+1500 shot o3
+1600 quit

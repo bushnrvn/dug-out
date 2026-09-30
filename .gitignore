@@ -1,0 +1,15 @@
+# build output and generated files
+build/
+bin/
+src/gen/
+*.xor
+*.sav
+.DS_Store
+# toolchain and dependencies (rebuild locally)
+tools/
+node_modules/
+scripts/converters/node_modules/
+scripts/build_setup/node_modules/
+# preview images made by the art scripts
+tools_py/preview_*.png
+npm-debug.log

@@ -1,0 +1,19 @@
+320 START
+323 0
+500 START
+503 0
+700 poke level 9
+700 poke enemies_left 0
+700 poke e_state 0 0
+700 poke e_state 0 1
+700 poke e_state 0 2
+700 poke e_state 0 3
+700 poke e_state 0 4
+700 poke e_state 0 5
+1200 peek state 1
+1200 peek score_h 2
+1200 START
+1203 0
+1250 peek state 1
+1210 peek level 1
+1300 quit

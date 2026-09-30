@@ -1,0 +1,16 @@
+320 START
+323 0
+600 poke level 1
+600 poke enemies_left 0
+600 poke e_state 0 0
+600 poke e_state 0 1
+600 poke e_state 0 2
+1000 poke e_state 6 1
+1000 poke e_timer 26 1
+1000 poke e_flen 3 1
+1000 poke e_face 0 1
+1000 poke e_state 2 0
+1000 poke e_state 5 2
+1003 shot v1
+1010 shot v2
+1100 quit

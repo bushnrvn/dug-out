@@ -1,0 +1,8 @@
+1150 peek state 1
+1250 peek state 1
+1300 shot a1
+1400 shot a2
+1520 shot a3
+1700 shot a4
+1900 peek state 1
+2000 quit

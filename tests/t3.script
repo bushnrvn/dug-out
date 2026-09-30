@@ -1,0 +1,7 @@
+320 START
+323 0
+540 shot /tmp/e0.bmp
+560 shot /tmp/e1.bmp
+580 shot /tmp/e2.bmp
+600 shot /tmp/e3.bmp
+610 quit

@@ -1,0 +1,44 @@
+320 START
+323 0
+500 START
+503 0
+900 poke level 8
+900 poke lives 5
+900 poke enemies_left 0
+900 poke e_state 0 0
+900 poke e_state 0 1
+900 poke e_state 0 2
+900 poke e_state 0 3
+900 poke e_state 0 4
+900 poke e_state 0 5
+1420 START
+1423 0
+1640 peek state 1
+1660 poke e_x 48 0
+1660 poke e_y 56 0
+1660 poke e_state 1 0
+1660 poke e_dir 3 0
+1700 A
+1702 0
+1730 peek e_state 1
+1730 peek e_x 2
+1730 peek e_y 2
+1730 peek e_infl 1
+1730 shot s1
+1745 A
+1747 0
+1775 peek e_state 1
+1775 peek e_x 2
+1775 peek e_y 2
+1775 peek e_infl 1
+1775 shot s2
+1790 A
+1792 0
+1830 peek e_state 1
+1830 peek e_y 2
+1830 peek e_infl 1
+1830 shot s3
+1880 peek e_state 1
+1880 peek e_y 2
+1880 peek e_infl 1
+1900 quit

@@ -1,0 +1,20 @@
+320 START
+323 0
+500 START
+503 0
+900 poke e_state 0 0
+900 poke enemies_left 2
+900 poke c_on 1 0
+900 poke c_slot 0 0
+900 poke c_x 48 0
+900 poke c_y 8 0
+900 poke e_x 48 1
+900 poke e_y 8 1
+900 poke e_state 1 1
+910 shot r1
+940 shot r2
+1010 peek e_state 3
+1010 peek enemies_left 1
+1010 peek c_on 3
+1010 shot r3
+1100 quit

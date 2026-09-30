@@ -1,0 +1,20 @@
+320 START
+323 0
+600 DOWN
+700 0
+702 RIGHT
+745 0
+745 peek px 4
+760 peek r_state 5
+760 peek state 1
+790 peek r_state 5
+800 shot r1
+830 peek r_state 5
+830 peek state 1
+830 peek lives 1
+840 shot r2
+960 peek state 1
+960 peek lives 1
+960 peek px 4
+980 shot r3
+1000 quit

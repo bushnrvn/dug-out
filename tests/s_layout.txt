@@ -1,0 +1,11 @@
+320 START
+323 0
+600 peek state 4
+600 peek px 4
+600 peek e_type 6
+600 peek e_x 6
+600 peek e_y 6
+600 peek r_on 5
+600 peek r_c 5
+600 peek r_r 5
+610 quit
