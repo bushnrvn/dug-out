@@ -2,6 +2,12 @@
 
 Versions follow MAJOR.MINOR.PATCH. The current version is in `VERSION`. Each release is a git tag (`v1.0.0`) with the ROM in `releases/`.
 
+## 1.2.1
+* Fix: cave layouts were only shuffled between ten fixed slots. Each pocket now gets its own random row, width and column, and some get a shaft.
+* Cave layouts are still seeded per game, from `new_game()`, so starting from the title or the attract screen both give new caves.
+* Removed a debug counter and redundant random-number churn to make room.
+* ROM: `releases/dugout-1.2.1.gtr`. The web build in `docs/` is rebuilt with it.
+
 ## 1.2.0
 * Cave layouts are random every game (seeded from when you press Start) instead of the same for each inning.
 * Baseball bats get faster in later innings.

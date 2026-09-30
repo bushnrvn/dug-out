@@ -58,7 +58,7 @@ static const unsigned char LEADY[4] = { 4, 4, 0, 8 };
 
 /* -------------------------------------------------------------- globals -- */
 SpriteSlot slot_bg, slot_spr, slot_spr2 = 0xFF, slot_end = 0xFF, slot_over = 0xFF, slot_pri = 0xFF;   /* slot_pri: untouched copy of the dirt page */
-unsigned int scene_t, idle_t, dbg_ticks;
+unsigned int scene_t, idle_t;
 unsigned char icur;                     /* which 'new enemy' intro is showing (index into the tables) */                 /* frames spent on the win / game over screens */
 unsigned int hi_saved, hi_at_start;
 unsigned char new_best;
@@ -372,20 +372,13 @@ static void reset_enemies_home(void)
 
 static void build_level(void)
 {
-    static const unsigned char rows[5] = { 3, 5, 7, 9, 11 };
-    unsigned char slots[10], i, j, t, ne, nr, tries, c, r, side, c0;
+    unsigned char i, ne, nr, tries, c, r, w, c0;
 
     if (level >= 5) need_page(&slot_pri, &ASSET__bg__bg_bmp_load_list);            /* pristine dirt for the Groundskeeper */
     if (level >= INNINGS) need_page(&slot_spr2, &ASSET__spr2__spr2_bmp_load_list); /* the Mascot's art */
     clear_map();
     lfsr = run_seed + level * 977u;
 
-    /* pockets: 10 slots (5 rows x 2 sides), shuffled */
-    for (i = 0; i < 10; ++i) slots[i] = i;
-    for (i = 9; i > 0; --i) {
-        j = rng() % (i + 1);
-        t = slots[i]; slots[i] = slots[j]; slots[j] = t;
-    }
     ne = 2 + level;
     if (ne > MAXE) ne = MAXE;
     if (level >= INNINGS) ne = 1;               /* the final inning is the Mascot, alone */
@@ -393,13 +386,21 @@ static void build_level(void)
     for (i = 0; i < MAXE; ++i) e_state[i] = ES_NONE;
     for (i = 0; i < MAXC; ++i) c_on[i] = 0;
     for (i = 0; i < ne; ++i) {
-        r = rows[slots[i] >> 1];
-        side = slots[i] & 1;
-        c0 = side ? 8 + (rng() % 3) : (rng() % 4);
-        carve(c0, r, 3, 1);
+        /* each pocket gets its own row, width, column and sometimes a shaft: nothing sits in a fixed slot */
+        for (tries = 0; tries < 30; ++tries) {
+            r = 3 + rng() % 9;
+            w = 2 + rng() % 4;
+            c0 = rng() % (COLS - w + 1);
+            if (c0 <= 6 && c0 + w > 6 && r < 7) continue;               /* not under Doug's shaft */
+            for (c = 0; c < i; ++c)                                     /* keep pockets a row apart if we can */
+                if (absdiff(e_homer[c], r) < 2) break;
+            if (c == i) break;
+        }
+        carve(c0, r, w, 1);
+        if (r < 11 && (c0 & 1)) carve(c0 + (w >> 1), r, 1, 2);            /* a shaft down */
         e_state[i] = ES_WALK;
         e_type[i] = (level >= 2 && (i & 1)) ? 1 : 0;
-        e_homec[i] = c0 + 1; e_homer[i] = r;
+        e_homec[i] = c0 + (w >> 1); e_homer[i] = r;
     }
     if (level >= 3) e_type[ne - 1] = 2;          /* a baseball bat joins from inning 3 */
     if (level >= 5 && ne >= 5) e_type[ne - 2] = 3; /* a Groundskeeper from inning 5 */
@@ -610,8 +611,9 @@ static void choose_dir(unsigned char i)
         for (d = 0; d < MAXC; ++d)
             if (c_on[d]) { tc = (c_x[d] + 4) >> 3; tr = (c_y[d] + 4) >> 3; break; }
     }
-    tc += (signed char)(rng() & 7) - 3;          /* aim a few cells off Doug so the routes are not the same every time */
-    tr += (signed char)(rng() & 7) - 3;
+    dist = rng();                                /* aim a few cells off Doug so the routes are not the same every time */
+    tc += (dist & 7) - 3;
+    tr += ((dist >> 3) & 7) - 3;
     for (d = 0; d < 4; ++d) {
         if (d == rev) continue;
         nc = c + DX[d]; nr = r + DY[d];
@@ -1130,6 +1132,7 @@ static void new_game(void)
 {
     level = 1; lives = 3; score_h = 0; next_life_h = 300;
     hi_at_start = hi_h; new_best = 0;
+    run_seed = ((((unsigned int)vsync_ctr << 8) ^ frame_ct ^ (idle_t * 251u)) ^ lfsr) | 1u;   /* new caves every game */
     score_dirty = 1;
     build_level();
     state = ST_INTRO; state_timer = 0; icur = 0;
@@ -1210,7 +1213,7 @@ static void music_poll(void)
 {
     unsigned char n = (unsigned char)(vsync_ctr - last_tick);
     if (n > 4) { last_tick = vsync_ctr - 4; n = 4; }
-    while (n) { ++last_tick; tick_music(); ++dbg_ticks; --n; }
+    while (n) { ++last_tick; tick_music(); --n; }
 }
 
 static void frame_end(void)
@@ -1456,8 +1459,6 @@ void game_main(void)
             text(30, 9, hi_str, 0);
             if (player1_buttons) idle_t = 0; else ++idle_t;
             if (player1_new_buttons & (INPUT_MASK_START | INPUT_MASK_A)) {
-                for (i = 0; i < 8; ++i) rng();
-                run_seed = ((((unsigned int)vsync_ctr << 8) ^ frame_ct ^ (idle_t * 251u)) ^ lfsr) | 1u;
                 new_game();
             } else if (idle_t > 450) {           /* ~15 s of nothing: show the cast */
                 need_page(&slot_spr2, &ASSET__spr2__spr2_bmp_load_list);
@@ -1470,7 +1471,6 @@ void game_main(void)
             attract_scene();
             queue_draw_box(1, 7, 126, 9, COL_INK);
             if (player1_new_buttons & (INPUT_MASK_START | INPUT_MASK_A)) {
-                for (i = 0; i < 8; ++i) rng();
                 new_game();
             } else if ((player1_new_buttons & INPUT_MASK_ALL_KEYS) || scene_t > 520) {
                 state = ST_TITLE; idle_t = 0;
