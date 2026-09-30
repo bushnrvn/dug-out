@@ -1,0 +1,57 @@
+320 START
+323 0
+600 poke level 4
+600 poke enemies_left 0
+600 poke e_state 0 0
+600 poke e_state 0 1
+600 poke e_state 0 2
+600 poke e_state 0 3
+1700 poke score_h 10
+1700 poke score_t 0
+1700 poke paid 4 96
+1700 poke paid 4 97
+1700 poke paid 4 98
+1700 poke paid 4 99
+1700 poke paid 4 100
+1700 poke paid 4 101
+1700 poke paid 4 102
+1700 poke paid 4 103
+1700 poke paid 4 104
+1700 poke paid 4 105
+1700 poke paid 4 106
+1700 poke paid 4 107
+1700 poke paid 4 108
+1700 poke paid 4 109
+2000 peek state 1
+2000 peek score_h 2
+2000 peek score_t 1
+2000 peek e_x 5
+2200 peek state 1
+2200 peek score_h 2
+2200 peek score_t 1
+2200 peek e_x 5
+2400 peek state 1
+2400 peek score_h 2
+2400 peek score_t 1
+2400 peek e_x 5
+2600 peek state 1
+2600 peek score_h 2
+2600 peek score_t 1
+2600 peek e_x 5
+2800 peek state 1
+2800 peek score_h 2
+2800 peek score_t 1
+2800 peek e_x 5
+3000 peek state 1
+3000 peek score_h 2
+3000 peek score_t 1
+3000 peek e_x 5
+3200 peek state 1
+3200 peek score_h 2
+3200 peek score_t 1
+3200 peek e_x 5
+3400 peek state 1
+3400 peek score_h 2
+3400 peek score_t 1
+3400 peek e_x 5
+3610 quit

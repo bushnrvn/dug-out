@@ -28,8 +28,15 @@ DMA_Start = $4006
 ; ---------------------------------------------------------------------------
 ; Non-maskable interrupt (NMI) service routine
 
+; VSYNC_RAW lives in the audio RAM "share" page ($3200-$32FF is reserved for the main CPU), which is
+; visible whichever RAM bank is mapped. The draw queue keeps its tables in RAM bank 1 and maps it in for
+; a few cycles per queued command; an NMI that lands then must not touch bank 0 variables, so the two
+; counters below are skipped. VSYNC_RAW is counted regardless, so the game's frame timing never loses a vsync.
+VSYNC_RAW = $3210
+
 _nmi_int:
         PHA
+        INC VSYNC_RAW
         LDA $1FFF
         BNE nmi_done
         STZ _frameflag

@@ -65,14 +65,40 @@ unsigned char new_best;
 unsigned char sbuf[5];
 unsigned char save_peek(unsigned int off);   /* fixed-bank helper, defined at the end */
 
+/* every vsync, counted by the NMI handler in shared audio RAM so none are lost while the draw queue's RAM bank is mapped */
+#define vsync_raw (*(volatile unsigned char*)0x3210)
+
+/* Code banks: PROG0 = gameplay, PROG1 = scenes. Calls between them go through bank_call (fixed bank),
+ * which the compiler inserts for every function declared inside a wrapped-call block. */
+void bank_call(void);
+#pragma wrapped-call (push, bank_call, BANK_PROG1)
+static void title_scene(void);
+static void over_scene(void);
+static void win_scene(void);
+static void attract_scene(void);
+static void intro_scene(void);
+static unsigned char intro_for_level(unsigned char lv);
+#pragma wrapped-call (pop)
+#pragma wrapped-call (push, bank_call, BANK_PROG2)       /* PROG2 = the enemies: behaviour, contact and drawing */
+static void enemies_update_all(void);
+static unsigned char enemies_touch_player(void);
+static void enemies_draw_all(void);
+#pragma wrapped-call (pop)
+#pragma wrapped-call (push, bank_call, BANK_PROG0)
+static void draw_field(void);
+static void need_page(SpriteSlot* slot, const SpritePage* page);
+#pragma wrapped-call (pop)
+
 /* 0 = tunnel, 1 = dirt, 2 = boulder cell.  16-wide rows so index = r<<4|c.
  * Columns 14/15 and row 13 are permanent solid padding. */
 unsigned char map[(ROWS + 1) * 16];
+unsigned char paid[(ROWS + 1) * 16];         /* tens of points Doug was paid for digging each cell (0 = none), so the Groundskeeper takes back exactly that */
 #define M(c, r) map[(((unsigned char)(r)) << 4) | ((unsigned char)(c))]
 
 unsigned char state, state_timer, frame_ct;
 unsigned char level, lives;
 unsigned int score_h, hi_h, next_life_h;   /* score in hundreds */
+unsigned char score_t, hi_t;               /* the tens digit of the score and of the best score */
 char score_str[9], hi_str[9];
 unsigned char score_dirty;
 unsigned int lfsr = 0xACE1u;
@@ -112,6 +138,7 @@ static void add_popup(unsigned char x, unsigned char y, unsigned int v)
 static const unsigned int rock_pts[6] = { 10, 25, 40, 60, 80, 100 };   /* hundreds */
 
 /* ---------------------------------------------------------------- utils -- */
+#pragma code-name (push, "CODE")     /* used from every bank */
 static unsigned char rng(void)
 {
     unsigned char i;
@@ -127,22 +154,23 @@ static unsigned char absdiff(unsigned char a, unsigned char b)
 {
     return a > b ? a - b : b - a;
 }
+#pragma code-name (pop)
 
-static void fmt_score(char* s, unsigned int v)
+static void fmt_score(char* s, unsigned int v, unsigned char t)
 {
-    /* v is hundreds; output 7 digits: 5 digits + "00" */
+    /* v is hundreds, t the tens digit; output 7 digits: 5 digits, the tens digit and a 0 */
     unsigned char i;
     for (i = 5; i > 0; --i) {
         s[i - 1] = '0' + (v % 10);
         v /= 10;
     }
-    s[5] = '0'; s[6] = '0'; s[7] = 0;
+    s[5] = '0' + t; s[6] = '0'; s[7] = 0;
 }
 
 static void add_score(unsigned int h)
 {
     score_h += h;
-    if (score_h > hi_h) hi_h = score_h;
+    if (score_h > hi_h || (score_h == hi_h && score_t > hi_t)) { hi_h = score_h; hi_t = score_t; }
     if (score_h >= next_life_h) {
         next_life_h += 300;
         if (lives < 5) ++lives;
@@ -151,12 +179,21 @@ static void add_score(unsigned int h)
     score_dirty = 1;
 }
 
+/* tunnelling pays in tens of points */
+static void add_tens(unsigned char t)
+{
+    score_t += t;
+    if (score_t >= 10) { score_t -= 10; add_score(1); }
+    else add_score(0);
+}
+
 /* ------------------------------------------------ live field image (sprite RAM)
  * The dirt/tunnel picture is baked into a page of sprite RAM.  Digging patches
  * 8x8 tiles in that page (CPU writes), so drawing the whole field is one blit. */
 static unsigned char dirty_flag[(ROWS + 1) * 16];
 static unsigned char dirty_list[40], dirty_n, refresh_all;
 
+#pragma code-name (push, "CODE")
 static void mark_dirty(signed char c, signed char r)
 {
     unsigned char idx;
@@ -180,6 +217,7 @@ static void mark_restore(unsigned char c, unsigned char r)
 {
     if (rest_n < 16) rest_list[rest_n++] = (r << 4) | c;
 }
+#pragma code-name (pop)
 
 static void restore_cell(unsigned char idx)
 {
@@ -278,6 +316,7 @@ static void field_reload(void)
     do { rect.x = (X); rect.y = (Y); rect.w = (W); rect.h = (H); \
          rect.gx = (GX); rect.gy = (GY); rect.b = (sl); queue_draw_sprite_rect(); } while (0)
 
+#pragma code-name (push, "CODE")     /* shared by every bank, so it lives in the fixed one */
 static void text(unsigned char x, unsigned char y, const char* s, unsigned char set)
 {
     unsigned char ch, idx, cell, gx, gy;
@@ -309,6 +348,7 @@ static void text_center(unsigned char y, const char* s, unsigned char set)
 {
     text(64 - (text_w(s) >> 1), y, s, set);
 }
+#pragma code-name (pop)
 
 static void banner(const char* a, const char* b)
 {
@@ -328,7 +368,7 @@ static void clear_map(void)
     unsigned char r, c;
     for (r = 0; r < ROWS + 1; ++r)
         for (c = 0; c < 16; ++c)
-            M(c, r) = (r == 0 && c < COLS) ? 0 : 1;
+            { M(c, r) = (r == 0 && c < COLS) ? 0 : 1; paid[(r << 4) | c] = 0; }
 }
 
 static void carve(unsigned char c, unsigned char r, unsigned char w, unsigned char h)
@@ -405,8 +445,7 @@ static void build_level(void)
     if (level >= 3) e_type[ne - 1] = 2;          /* a baseball bat joins from inning 3 */
     if (level >= 5 && ne >= 5) e_type[ne - 2] = 3; /* a Groundskeeper from inning 5 */
     if (level >= INNINGS) e_type[0] = 4;
-    /* the Groundskeeper is a nuisance, not a target: it doesn't count toward clearing the inning */
-    enemies_left = ne - ((level >= 5 && ne >= 5 && level < INNINGS) ? 1 : 0);
+    enemies_left = ne;                          /* every enemy, the Groundskeeper included, must be struck out */
 
     /* boulders */
     for (i = 0; i < MAXR; ++i) r_on[i] = 0;
@@ -492,7 +531,7 @@ static void strike(unsigned char k)
         add_score(pts);
         add_popup(e_x[k], e_y[k], pts);
         if (e_type[k] == 0) add_corpse(k);      /* Vumpires can be raised again; crushed ones can't */
-        if (e_type[k] != 3) --enemies_left;
+        --enemies_left;
     } else {
         SFXP(e_infl[k] == 1 ? ASSET__audio__pump1_sfx_ID : ASSET__audio__pump2_sfx_ID, 1);
     }
@@ -523,7 +562,7 @@ static void ball_step(void)
 
 static void player_update(void)
 {
-    unsigned char want = 255, misal, d, moved = 0, c, r, slow;
+    unsigned char want = 255, misal, d, moved = 0, c, r, slow, pay;
     int b = player1_buttons;
 
     if (pdir < 2) {
@@ -574,6 +613,9 @@ static void player_update(void)
         c = (px + 4) >> 3; r = (py + 4) >> 3;
         if (M(c, r) == 1) {
             M(c, r) = 0;
+            pay = (r <= 3) ? 1 : (r <= 6) ? 2 : (r <= 9) ? 3 : 4;    /* 10, 20, 30, 40 points, by depth */
+            paid[(r << 4) | c] = pay;
+            add_tens(pay);
             mark_around(c, r);
             SFX(ASSET__audio__dig_sfx_ID);
         }
@@ -591,8 +633,8 @@ static void player_update(void)
 }
 
 /* -------------------------------------------------------------- enemies -- */
-/* (this section lives in the fixed bank: PROG0 is full) */
-#pragma code-name (push, "CODE")
+/* (this section lives in its own bank, PROG2) */
+#pragma code-name (push, "PROG2")
 
 static unsigned char open_cell(signed char c, signed char r)
 {
@@ -646,7 +688,6 @@ static unsigned char orb_hits_player(unsigned char i)
     return 0;
 }
 
-#pragma code-name (pop)
 
 static unsigned char line_clear(unsigned char c, unsigned char r, unsigned char dir, unsigned char len)
 {
@@ -703,6 +744,14 @@ static void choose_dir_g(unsigned char i)
 }
 
 /* rake the cell just left back into dirt (never with Doug or another enemy standing in it) */
+static void sub_tens(unsigned char t)
+{
+    if (score_t >= t) score_t -= t;
+    else if (score_h) { --score_h; score_t += 10 - t; }
+    else score_t = 0;
+    score_dirty = 1;
+}
+
 static void refill_cell(unsigned char c, unsigned char r, unsigned char self)
 {
     unsigned char k;
@@ -713,6 +762,8 @@ static void refill_cell(unsigned char c, unsigned char r, unsigned char self)
         if (absdiff(e_x[k], c << 3) < 8 && absdiff(e_y[k], r << 3) < 8) return;
     }
     M(c, r) = 1;
+    k = (r << 4) | c;
+    if (paid[k]) { sub_tens(paid[k]); paid[k] = 0; }      /* the Groundskeeper takes back what the dig paid */
     mark_restore(c, r);
     mark_around(c, r);
 }
@@ -866,6 +917,27 @@ static unsigned char flame_hits_player(unsigned char i)
     return (px + 8 > fx && px + 2 < e_x[i]);
 }
 
+static void enemies_update_all(void)
+{
+    unsigned char i;
+    for (i = 0; i < MAXE; ++i)
+        if (e_state[i] != ES_NONE) enemy_update(i);
+}
+
+static unsigned char enemies_touch_player(void)
+{
+    unsigned char i, k;
+    for (i = 0; i < MAXE; ++i) {
+        k = e_state[i];
+        if ((k == ES_WALK || k == ES_GHOST || k == ES_FLAME) && e_type[i] != 3) {
+            if (absdiff(e_x[i], px) < 6 && absdiff(e_y[i], py) < 6) return 1;
+            if (flame_hits_player(i) || orb_hits_player(i)) return 1;
+        }
+    }
+    return 0;
+}
+#pragma code-name (pop)
+
 /* -------------------------------------------------------------- boulders -- */
 static void rocks_update(void)
 {
@@ -918,7 +990,7 @@ static void rocks_update(void)
                     add_score(rock_pts[r_kills[i] < 5 ? r_kills[i] : 5]);
                     add_popup(e_x[k], e_y[k] > 8 ? e_y[k] - 8 : 0, rock_pts[r_kills[i] < 5 ? r_kills[i] : 5]);
                     ++r_kills[i];
-                    if (e_type[k] != 3) --enemies_left;
+                    --enemies_left;
                     SFXP(ASSET__audio__squash_sfx_ID, 3);
                 }
             }
@@ -969,6 +1041,7 @@ static void draw_ball(void)
     queue_draw_box(bx + 1, by + 1, 2, 1, COL_FLAME3);                                     /* seam */
 }
 
+#pragma code-name (push, "PROG2")
 static void draw_mark(unsigned char i, unsigned char x, unsigned char y)
 {
     /* strike marks: X1 white, X2 yellow, X3 red (Mad Scott: X1..X5 in the same colours) */
@@ -1049,6 +1122,14 @@ static void draw_enemy(unsigned char i)
     }
 }
 
+static void enemies_draw_all(void)
+{
+    unsigned char i;
+    for (i = 0; i < MAXE; ++i)
+        if (e_state[i] != ES_NONE) draw_enemy(i);
+}
+#pragma code-name (pop)
+
 static void draw_player(void)
 {
     unsigned char x = FX + px, y = FY + py, f;
@@ -1068,8 +1149,8 @@ static void draw_hud(void)
     queue_draw_box(1, 7, 126, 9, COL_INK);
     queue_draw_box(1, 15, 126, 1, COL_RIM);
     if (score_dirty) {
-        fmt_score(score_str, score_h);
-        fmt_score(hi_str, hi_h);
+        fmt_score(score_str, score_h, score_t);
+        fmt_score(hi_str, hi_h, hi_t);
         score_dirty = 0;
     }
     text(10, 9, "RUNS", 1);
@@ -1120,8 +1201,7 @@ static void draw_world(void)
     for (i = 0; i < MAXC; ++i)
         if (c_on[i]) BLIT(slot_spr, FX + c_x[i], FY + c_y[i], 8, 8, SP_TOMB_X, SP_TOMB_Y);
     draw_ball();
-    for (i = 0; i < MAXE; ++i)
-        if (e_state[i] != ES_NONE) draw_enemy(i);
+    enemies_draw_all();
     draw_player();
     draw_popups();
     draw_hud();
@@ -1130,9 +1210,13 @@ static void draw_world(void)
 /* ------------------------------------------------------------- game flow -- */
 static void new_game(void)
 {
-    level = 1; lives = 3; score_h = 0; next_life_h = 300;
+    level = 1; lives = 3; score_h = 0; score_t = 0; next_life_h = 300;
     hi_at_start = hi_h; new_best = 0;
-    run_seed = ((((unsigned int)vsync_ctr << 8) ^ frame_ct ^ (idle_t * 251u)) ^ lfsr) | 1u;   /* new caves every game */
+#ifdef FIXED_SEED
+    run_seed = FIXED_SEED;                        /* regression builds: same caves every run */
+#else
+    run_seed = ((((unsigned int)vsync_raw << 8) ^ frame_ct ^ (idle_t * 251u)) ^ lfsr) | 1u;   /* new caves every game */
+#endif
     score_dirty = 1;
     build_level();
     state = ST_INTRO; state_timer = 0; icur = 0;
@@ -1174,17 +1258,10 @@ static void play_update(void)
             }
         }
     }
-    for (i = 0; i < MAXE; ++i)
-        if (e_state[i] != ES_NONE) enemy_update(i);
+    enemies_update_all();
 
     /* deadly contact */
-    for (i = 0; i < MAXE; ++i) {
-        k = e_state[i];
-        if ((k == ES_WALK || k == ES_GHOST || k == ES_FLAME) && e_type[i] != 3) {
-            if (absdiff(e_x[i], px) < 6 && absdiff(e_y[i], py) < 6) { kill_player(); return; }
-            if (flame_hits_player(i) || orb_hits_player(i)) { kill_player(); return; }
-        }
-    }
+    if (enemies_touch_player()) { kill_player(); return; }
     for (i = 0; i < MAXR; ++i) {
         if (r_on[i] && r_state[i] == RS_FALL &&
             absdiff(px, r_c[i] << 3) < 7 && absdiff(py, r_y[i]) < 7) {
@@ -1195,7 +1272,7 @@ static void play_update(void)
 
     if (enemies_left == 0) {
         unsigned char alive = 0;
-        for (i = 0; i < MAXE; ++i) if (e_state[i] != ES_NONE && e_type[i] != 3) alive = 1;
+        for (i = 0; i < MAXE; ++i) if (e_state[i] != ES_NONE) alive = 1;
         if (!alive) {
             state = ST_CLEAR; state_timer = 0;
             stop_music();
@@ -1211,8 +1288,8 @@ static unsigned char last_flip, last_tick;
  * so a slow frame can't make the notes bunch up. */
 static void music_poll(void)
 {
-    unsigned char n = (unsigned char)(vsync_ctr - last_tick);
-    if (n > 4) { last_tick = vsync_ctr - 4; n = 4; }
+    unsigned char n = (unsigned char)(vsync_raw - last_tick);
+    if (n > 4) { last_tick = vsync_raw - 4; n = 4; }
     while (n) { ++last_tick; tick_music(); --n; }
 }
 
@@ -1223,19 +1300,18 @@ static void frame_end(void)
     await_draw_queue();
     music_poll();
     for (;;) {
-        v = vsync_ctr;
-        while (vsync_ctr == v) { }                                   /* wait for the next vsync */
-        if ((unsigned char)(vsync_ctr - last_flip) >= FRAME_VSYNCS) break;
+        v = vsync_raw;
+        while (vsync_raw == v) { }                                   /* wait for the next vsync */
+        if ((unsigned char)(vsync_raw - last_flip) >= FRAME_VSYNCS) break;
         music_poll();                                                /* the in-between vsync */
     }
     flip_pages();
-    last_flip = vsync_ctr;
+    last_flip = vsync_raw;
     music_poll();
 }
 
-/* The whole-screen scenes live in the fixed ROM bank: PROG0 is full, and they are only ever
- * called from game code while PROG0 is mapped in, so calls in both directions just work. */
-#pragma code-name (push, "CODE")
+/* The whole-screen scenes live in their own bank, PROG1. The game loop reaches them through bank_call. */
+#pragma code-name (push, "PROG1")
 
 static void plaque(unsigned char x, unsigned char y, unsigned char w, unsigned char h)
 {
@@ -1266,6 +1342,8 @@ static void title_scene(void)
 
 /* ---- high score: kept in the cartridge's flash save sector ------------------------------
  * layout: 0x44 0x55 lo hi check.  A blank/never-written sector fails the magic and is ignored. */
+#pragma code-name (pop)
+#pragma code-name (push, "CODE")           /* the save code stays in the fixed bank */
 static void load_hiscore(void)
 {
     unsigned char lo, hi;
@@ -1292,6 +1370,8 @@ static void save_hiscore_if_needed(void)
 }
 
 /* bottom plaque shared by the win and game over screens: score / best, then PRESS START */
+#pragma code-name (pop)
+#pragma code-name (push, "PROG1")
 static void score_plaque(void)
 {
     queue_draw_box(1, 108, 126, 12, COL_INK);
@@ -1357,11 +1437,12 @@ static void win_scene(void)
 
 #pragma code-name (pop)
 /* Idle at the title long enough and the enemies introduce themselves, one at a time. */
+#pragma code-name (push, "PROG1")
 static void attract_scene(void)
 {
     static const char* const names[5] = { "VUMPIRE", "HEATER", "BASEBALL BAT", "GROUNDSKEEPER", "MAD SCOTT" };
     static const char* const descs[5] = { "RAISES THE FALLEN", "BREATHES FIRE",
-                                          "FLIES THROUGH DIRT", "JUST CLOSES TUNNELS",
+                                          "FLIES THROUGH DIRT", "RAKES TUNNELS SHUT",
                                           "BOSS. SIX STRIKES" };
     unsigned char i, y, f = (frame_ct >> 2) & 1, shown = (unsigned char)(scene_t / 50) + 1;
     draw_field();
@@ -1383,8 +1464,9 @@ static void attract_scene(void)
         text(28, y + 6, descs[i], 0);
     }
 }
+#pragma code-name (pop)
 
-#pragma code-name (push, "CODE")
+#pragma code-name (push, "PROG1")
 
 /* Every time an inning brings a new kind of enemy, a short screen introduces it. */
 static const char* const I_TITLE[5] = { "WARNING!", "NEW ARRIVAL!", "INCOMING!", "HEADS UP!", "FINAL INNING!" };
@@ -1432,12 +1514,13 @@ void game_main(void)
 {
     unsigned char i;
 
+    last_tick = last_flip = vsync_raw;
     slot_bg = allocate_sprite(&ASSET__bg__bg_bmp_load_list);
     slot_spr = allocate_sprite(&ASSET__spr__spr_bmp_load_list);
 
     hi_h = 100;
     load_hiscore();
-    score_h = 0; lives = 3; level = 1;
+    score_h = 0; score_t = 0; lives = 3; level = 1;
     score_dirty = 1;
     for (i = 0; i < MAXE; ++i) e_state[i] = ES_NONE;
     for (i = 0; i < MAXR; ++i) r_on[i] = 0;
@@ -1454,7 +1537,7 @@ void game_main(void)
         case ST_TITLE:
             title_scene();
             queue_draw_box(1, 7, 126, 9, COL_INK);
-            if (score_dirty) { fmt_score(hi_str, hi_h); }
+            if (score_dirty) { fmt_score(hi_str, hi_h, hi_t); }
             text(10, 9, "BEST", 1);
             text(30, 9, hi_str, 0);
             if (player1_buttons) idle_t = 0; else ++idle_t;
@@ -1519,7 +1602,7 @@ void game_main(void)
                 if (--lives == 0) {
                     save_hiscore_if_needed();
                     need_page(&slot_over, &ASSET__over__over_bmp_load_list);
-                    fmt_score(score_str, score_h); fmt_score(hi_str, hi_h);
+                    fmt_score(score_str, score_h, score_t); fmt_score(hi_str, hi_h, hi_t);
                     state = ST_OVER; state_timer = 0; scene_t = 0;
                     play_song(ASSET__audio__over_mid, REPEAT_NONE);
                 } else {
@@ -1539,7 +1622,7 @@ void game_main(void)
                     add_score(10 * lives);           /* 1,000 per life left */
                     save_hiscore_if_needed();
                     need_page(&slot_end, &ASSET__end__end_bmp_load_list);
-                    fmt_score(score_str, score_h); fmt_score(hi_str, hi_h);
+                    fmt_score(score_str, score_h, score_t); fmt_score(hi_str, hi_h, hi_t);
                     state = ST_WIN; state_timer = 0; scene_t = 0;
                     play_song(ASSET__audio__title_mid, REPEAT_LOOP);
                 } else {

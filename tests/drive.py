@@ -18,7 +18,7 @@ ROOT = os.path.join(HERE, '..')
 EMU = os.path.join(ROOT, '..', 'GameTankEmulator', 'bin', 'GameTankEmulator')
 
 def symbols():
-    txt = open(os.path.join(ROOT, 'build', 'out.map')).read()
+    txt = open(os.environ.get('GT_MAP') or os.path.join(ROOT, 'build', 'out.map')).read()
     sec = txt[txt.index('Exports list by name'):txt.index('Exports list by value')]
     return {m.group(1): int(m.group(2), 16) for m in re.finditer(r'\b_(\w+)\s+([0-9A-F]{6})\s+\w+', sec)}
 
@@ -49,7 +49,7 @@ def main():
     env = dict(os.environ, GT_FAST='1', GT_SCRIPT=tmp, GT_FPS=os.environ.get('GT_FPS', ''))
     if not env['GT_FPS']:
         del env['GT_FPS']
-    r = subprocess.run([EMU, os.path.join(ROOT, 'bin', 'dugout.gtr')], env=env, capture_output=True, text=True, timeout=300, cwd=ROOT)
+    r = subprocess.run([EMU, os.environ.get('GT_ROM') or os.path.join(ROOT, 'bin', 'dugout.gtr')], env=env, capture_output=True, text=True, timeout=300, cwd=ROOT)
     for l in r.stdout.splitlines():
         if l.startswith('PEEK') or l.startswith('vframe'):
             print(l)

@@ -1,0 +1,25 @@
+320 START
+323 0
+600 poke level 4
+600 poke enemies_left 0
+600 poke e_state 0 0
+600 poke e_state 0 1
+600 poke e_state 0 2
+600 poke e_state 0 3
+2100 peek level 1
+2100 peek enemies_left 1
+2100 peek e_type 6
+2100 peek state 1
+2110 poke e_state 0 0
+2110 poke e_state 0 1
+2110 poke e_state 0 2
+2110 poke e_state 0 3
+2110 poke e_state 0 5
+2110 poke enemies_left 1
+2400 peek state 1
+2400 peek enemies_left 1
+2400 peek e_state 6
+2410 poke e_state 0 4
+2410 poke enemies_left 0
+2700 peek state 1
+2710 quit
