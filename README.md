@@ -44,8 +44,7 @@ Current version: see `VERSION` and `CHANGELOG.md`. The ROM for each release is i
 * **Depth gauges** in both margins with a gold marker that follows Doug.
 * **Scoreboard UI** - RUNS, INN(ing), baseball icons for lives, "PLAY BALL!" / "STRIKE THREE!".
 
-All art is authored as code + ASCII pixel art in `tools_py/make_assets.py` (nothing traced or
-imported) and quantised to the GameTank's real 256-colour palette.
+All art is authored as code + ASCII pixel art in `tools_py/make_assets.py` and quantised to the GameTank's real 256-colour palette.
 
 ## How it's built
 
