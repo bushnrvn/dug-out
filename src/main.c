@@ -76,6 +76,7 @@ unsigned int score_h, hi_h, next_life_h;   /* score in hundreds */
 char score_str[9], hi_str[9];
 unsigned char score_dirty;
 unsigned int lfsr = 0xACE1u;
+unsigned int run_seed = 0x1357u;      /* new every game: the cave layouts differ from run to run */
 
 /* player */
 unsigned char px, py, pdir, panim, pmoving;
@@ -377,7 +378,7 @@ static void build_level(void)
     if (level >= 5) need_page(&slot_pri, &ASSET__bg__bg_bmp_load_list);            /* pristine dirt for the Groundskeeper */
     if (level >= INNINGS) need_page(&slot_spr2, &ASSET__spr2__spr2_bmp_load_list); /* the Mascot's art */
     clear_map();
-    lfsr = 0x1357u + level * 977u;
+    lfsr = run_seed + level * 977u;
 
     /* pockets: 10 slots (5 rows x 2 sides), shuffled */
     for (i = 0; i < 10; ++i) slots[i] = i;
@@ -795,7 +796,7 @@ static void enemy_update(unsigned char i)
             /* baseball bat: flies straight at Doug through dirt, diagonally, never lands.
              * It hovers in its pocket for a few seconds at the start of a round. */
             if (e_timer[i] < 150) return;
-            e_acc[i] += 10;
+            e_acc[i] += 11 + (level >> 1);                 /* bats get quicker in later innings */
             if (e_acc[i] < 16) return;
             e_acc[i] -= 16;
             if (x < px) { ++x; e_face[i] = DIR_R; }
@@ -1456,6 +1457,7 @@ void game_main(void)
             if (player1_buttons) idle_t = 0; else ++idle_t;
             if (player1_new_buttons & (INPUT_MASK_START | INPUT_MASK_A)) {
                 for (i = 0; i < 8; ++i) rng();
+                run_seed = ((((unsigned int)vsync_ctr << 8) ^ frame_ct ^ (idle_t * 251u)) ^ lfsr) | 1u;
                 new_game();
             } else if (idle_t > 450) {           /* ~15 s of nothing: show the cast */
                 need_page(&slot_spr2, &ASSET__spr2__spr2_bmp_load_list);

@@ -2,6 +2,12 @@
 
 Versions follow MAJOR.MINOR.PATCH. The current version is in `VERSION`. Each release is a git tag (`v1.0.0`) with the ROM in `releases/`.
 
+## 1.2.0
+* Cave layouts are random every game (seeded from when you press Start) instead of the same for each inning.
+* Baseball bats get faster in later innings.
+* Tooling: `tools_py/art_kit.py` builds an artist kit and imports redrawn sprite sheets (`art_custom/`), and `tests/` has Heater fireball checks.
+* ROM: `releases/dugout-1.2.0.gtr`. The web build in `docs/` is rebuilt with it.
+
 ## 1.1.0
 * Heaters: shorter wind-up before the fire, faster and more frequent fire blasts, and two fireballs that orbit each Heater and kill on touch.
 * Enemy paths are less predictable: walking enemies aim a few cells off the player and turn at random more often.
