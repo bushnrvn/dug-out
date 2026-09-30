@@ -2,6 +2,21 @@
 
 A spooky homage to DigDug about baseball for the Gametank. Works in an emulator and real hardware.
 
+## Screenshots
+
+Frames captured from the game running in the GameTank emulator (version 1.3.0).
+
+<p>
+<img src="screenshots/1-title.png" width="240" alt="Title screen">
+<img src="screenshots/2-digging.png" width="240" alt="Digging in inning 1">
+<img src="screenshots/3-heaters.png" width="240" alt="Heaters breathing fire, with fireballs circling them">
+</p>
+<p>
+<img src="screenshots/4-inning5.png" width="240" alt="Inning 5: Vumpires, Heaters, a Baseball Bat and a Groundskeeper">
+<img src="screenshots/5-boss.png" width="240" alt="Mad Scott, the inning 9 boss">
+<img src="screenshots/6-victory.png" width="240" alt="Victory screen">
+</p>
+
 ## Play
 
 Current version: see `VERSION` and `CHANGELOG.md`. The ROM for each release is in `releases/` (load it in any GameTank emulator). A browser build is in `docs/`.
