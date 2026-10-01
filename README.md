@@ -37,10 +37,10 @@ Current version: see `VERSION` and `CHANGELOG.md`. The ROM for each release is i
 * **Heaters** (inning 2+) breathe fire along a straight tunnel after a short wind-up (watch for the blink), and a fireball circles each one, so keep your distance and throw. The flame hurts only where it is drawn.
 * **Baseball Bats** (inning 3+) are winged baseballs that fly straight through dirt at Doug. They wait a short
   while at the start of each inning, and your throws can hit them only in the open: a ball stops at dirt, so a bat has to come out into a tunnel before you can hit it.
-* **Groundskeepers** (inning 5+) are no threat to Doug's life, but they wander the tunnels and rake them shut behind them, taking back the points those blocks paid. They count toward clearing the inning, so strike them out too.
+* **Groundskeepers** (inning 5+) are no threat to Doug's life. They tunnel through the dirt from cave to cave, opening up the sealed ones (so the monsters inside can come out), and they rake shut the tunnels Doug dug, taking back the points those blocks paid. They never close a cave or a tunnel of their own. They count toward clearing the inning, so strike them out too.
 * **The final inning** is a single boss, **Mad Scott**: a huge slow foam-head that smashes a tunnel through the dirt straight at you and takes six
   strikes (a home plate counts as three). Beat it to win.
-* **Enemies stay in their caves until a path is dug**, by Doug or, from inning 5, by the Groundskeeper's raking. Once one is open they head for Doug. **When only two are left they run for the top** along the tunnels (bats fly straight up through the dirt); one that gets out costs you the points it would have been worth, so cut them off.
+* **Enemies stay in their caves until a path is dug**, by Doug or, from inning 5, by the Groundskeeper's tunnelling. Once one is open they head for Doug. **When only two are left they run for the top** along the tunnels (bats fly straight up through the dirt); one that gets out costs you the points it would have been worth, so cut them off.
 * A **peanut** lies in one of the enemy caves each inning, at a random spot. Enemies walk over it; dig to it and touch it for 500 points.
 * Deeper critters and multi-kill boulders score more. Tunnelling pays too: 10, 20, 30 or 40 points per block by depth, and the Groundskeeper takes back exactly that when it rakes a block shut. Extra life every 10,000.
 

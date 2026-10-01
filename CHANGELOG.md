@@ -8,6 +8,7 @@ Versions follow MAJOR.MINOR.PATCH. The current version is in `VERSION`. Each rel
 * Baseball bats leave their pocket sooner at the start of an inning (about 3.3 seconds instead of 5).
 * An extra life now comes every 10,000 points instead of every 30,000.
 * When only two enemies are left they run for the top along the open tunnels (bats fly straight up through the dirt, and Groundskeepers and Mad Scott never run). A sealed cave stays sealed. One that makes it out costs the points it would have paid at its depth and counts as gone. They also head for Doug more directly while more are left.
+* The Groundskeeper now digs as it moves: it tunnels through the dirt to the nearest sealed cave, then the next, opening them up. It still rakes shut the tunnels Doug dug (and takes back their points), but never a cave or a tunnel of its own.
 * New: a peanut lies at a random spot in one of the enemy caves each inning. Enemies pass over it; Doug picks it up for 500 points.
 
 ## 1.3.3
