@@ -687,18 +687,18 @@ def burst(size):
     return b
 burst_frames = [place_sheet(burst(sz), 'burst%d' % i) for i, sz in enumerate(BURST_SIZES)]
 
-# --- a peanut in its shell (8x8), the ballpark snack: two lobes, a pinched waist, a few shell dimples
+# --- a peanut in its shell (8x8), lying on the diagonal: two fat lobes, a pinched waist, light on the upper left, shade on the lower right
 PEANUT = [
-    "........",
-    ".ccc.cc.",
-    "cccccccc",
-    "cdcccdcc",
-    "ccdcccdc",
-    "cccccccc",
-    ".cc.ccc.",
-    "........",
+    "....hcc.",
+    "...hcccd",
+    "...cdccd",
+    "...hccd.",
+    ".hccd...",
+    "hccccd..",
+    "hcdccd..",
+    ".dddd...",
 ]
-PEANUTL = dict(c=P['cream'], d=P['suit_d'])
+PEANUTL = dict(c=P['cream'], d=P['suit_d'], h=P['flame1'])
 peanut_xy = spr.blit_grid(PEANUT, PEANUTL, 'peanut')
 
 spr.save_bmp(os.path.join(ROOT, 'assets', 'spr', 'spr.bmp'))
