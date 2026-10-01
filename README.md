@@ -36,7 +36,7 @@ Current version: see `VERSION` and `CHANGELOG.md`. The ROM for each release is i
 * **Vumpires** walk the tunnels and can **raise fallen Vumpires**: a struck-out Vumpire leaves a headstone, and a living Vumpire that reaches it brings it back - unless every Vumpire is gone. Stomp a headstone to stop it. Home plates finish them for good.
 * **Heaters** (inning 2+) breathe fire along a straight tunnel after a short wind-up (watch for the blink), and two fireballs circle each one, so keep your distance and throw.
 * **Baseball Bats** (inning 3+) are winged baseballs that fly straight through dirt at Doug. They wait a few
-  seconds at the start of each inning, and your throws can hit them even inside dirt.
+  seconds at the start of each inning, and your throws can hit them only in the open: a ball stops at dirt, so a bat has to come out into a tunnel before you can hit it.
 * **Groundskeepers** (inning 5+) are no threat to Doug's life, but they wander the tunnels and rake them shut behind them, taking back the points those blocks paid. They count toward clearing the inning, so strike them out too.
 * **The final inning** is a single boss, **Mad Scott**: a huge slow foam-head that smashes a tunnel through the dirt straight at you and takes six
   strikes (a home plate counts as three). Beat it to win.

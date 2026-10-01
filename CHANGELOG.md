@@ -2,6 +2,10 @@
 
 Versions follow MAJOR.MINOR.PATCH. The current version is in `VERSION`. Each release is a git tag (`v1.0.0`) with the ROM in `releases/`.
 
+## 1.3.3
+* A thrown ball now stops at dirt instead of flying on through it. It still gets one last chance to hit a Baseball Bat or Mad Scott sitting in the first dirt cell at a tunnel mouth, so bats can only be hit when they come out into the open.
+* ROM: `releases/dugout-1.3.3.gtr`. The web build in `docs/` is rebuilt with it.
+
 ## 1.3.2
 * A Heater's starting tunnel is now at least 4 cells wide, so there is always room to get to it and throw. Before, a Heater could start in a 2 or 3 cell pocket you could not reach safely.
 * The caves change a little as a result (the same seed gives a different Heater pocket), but nothing else about the levels does.
