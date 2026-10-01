@@ -687,19 +687,19 @@ def burst(size):
     return b
 burst_frames = [place_sheet(burst(sz), 'burst%d' % i) for i, sz in enumerate(BURST_SIZES)]
 
-# --- a peanut in its shell (8x8), lying on the diagonal: two fat lobes, a pinched waist, light on the upper left, shade on the lower right
-PEANUT = [
-    "....hcc.",
-    "...hcccd",
-    "...cdccd",
-    "...hccd.",
-    ".hccd...",
-    "hccccd..",
-    "hcdccd..",
-    ".dddd...",
+# --- a red hot candy (8x8): a round, shiny, cinnamon-red sweet with a highlight and a darker underside
+CANDY = [
+    "..kkkk..",
+    ".kllvvk.",
+    "kllhlvvk",
+    "klhlvvvk",
+    "klvvvvdk",
+    "kvvvvvdk",
+    ".kvdddk.",
+    "..kkkk..",
 ]
-PEANUTL = dict(c=P['cream'], d=P['suit_d'], h=P['flame1'])
-peanut_xy = spr.blit_grid(PEANUT, PEANUTL, 'peanut')
+CANDYL = dict(k=P['ink'], v=90, l=91, h=95, d=88)       # the palette's own crimsons (it has no pure red): body, light, shine, shade
+candy_xy = spr.blit_grid(CANDY, CANDYL, 'candy')
 
 spr.save_bmp(os.path.join(ROOT, 'assets', 'spr', 'spr.bmp'))
 png(os.path.join(ROOT, 'tools_py', 'preview_spr.png'), spr.px, 5)
@@ -1318,7 +1318,7 @@ h.append('#define SP_FONT_X %d\n#define SP_FONT_Y %d\n' % (fx0, fy0))
 h.append('#define SP_LOGO_X %d\n#define SP_LOGO_Y %d\n#define SP_LOGO_W %d\n#define SP_LOGO_H %d\n' % (logo_xy + (LOGO_W, LOGO_H)))
 h.append('#define SP_PORTRAIT_X %d\n#define SP_PORTRAIT_Y %d\n#define SP_PORTRAIT_W %d\n#define SP_PORTRAIT_H %d\n' % (portrait_xy + (portrait.w, portrait.h)))
 h.append('#define SP_LIFE_X %d\n#define SP_LIFE_Y %d\n' % life_xy)
-h.append('#define SP_PEANUT_X %d\n#define SP_PEANUT_Y %d\n' % peanut_xy)
+h.append('#define SP_CANDY_X %d\n#define SP_CANDY_Y %d\n' % candy_xy)
 h.append('#endif\n')
 open(os.path.join(ROOT, 'src', 'gen_art.h'), 'w').write(''.join(h))
 print('ok; sprite sheet used to y=%d' % (spr.cy + spr.rowh))
