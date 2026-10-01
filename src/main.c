@@ -111,6 +111,8 @@ unsigned char ball_on, ball_x, ball_y, ball_dir, ball_dist, throw_cd, ball_dirt;
 /* enemies (structure of arrays: cheaper on a 6502) */
 unsigned char e_state[MAXE], e_type[MAXE], e_x[MAXE], e_y[MAXE], e_dir[MAXE], e_face[MAXE];
 unsigned char e_infl[MAXE], e_timer[MAXE], e_acc[MAXE], e_homec[MAXE], e_homer[MAXE], e_flen[MAXE];
+unsigned char pmv;                           /* ticks left in which Doug counts as moving (for his head bob) */
+unsigned char e_mv[MAXE];                    /* ticks left in which an enemy counts as moving (for its head bob) */
 unsigned char e_flee[MAXE], e_pts[MAXE];      /* running for the top (the last two enemies), and what it would cost if they get there (hundreds) */
 unsigned char e_prevc[MAXE], e_prevr[MAXE];
 
@@ -320,13 +322,14 @@ static void field_reload(void)
     do { rect.x = (X); rect.y = (Y); rect.w = (W); rect.h = (H); \
          rect.gx = (GX); rect.gy = (GY); rect.b = (sl); queue_draw_sprite_rect(); } while (0)
 /* a sprite whose top HD rows (the head) drop a pixel on the beat: the body first, then the head over it */
-#define BLIT_BOB(sl, X, Y, W, H, GX, GY, HD) \
-    do { if (bob) { BLIT(sl, X, (Y) + (HD), W, (H) - (HD), GX, (GY) + (HD)); BLIT(sl, X, (Y) + 1, W, HD, GX, GY); } \
+#define BLIT_BOB(sl, X, Y, W, H, GX, GY, HD, MV) \
+    do { if (bob && (MV)) { BLIT(sl, X, (Y) + (HD), W, (H) - (HD), GX, (GY) + (HD)); BLIT(sl, X, (Y) + 1, W, HD, GX, GY); } \
          else BLIT(sl, X, Y, W, H, GX, GY); } while (0)
 
 #pragma code-name (push, "CODE")     /* shared by every bank, so it lives in the fixed one */
 /* The beat. The theme's snare hits fall on a grid 52.15 frames apart (26.075 game ticks), the first 26.9 frames into the song, and the song
- * (8371 frames) loops. beat_acc is how far into a beat it is, in 1/256 ticks; bob is set for the first part of each beat. */
+ * (8371 frames) loops. beat_acc is how far into a snare period it is, in 1/256 ticks; bob is set for the first part of each half of it, so
+ * the head nods on every snare hit and on the beat between. */
 #define BEAT_FP    6675u
 #define BEAT_START (6675u - 3443u)
 #define BEAT_WIN   1280u
@@ -340,7 +343,7 @@ static void beat_tick(void)
         if (beat_acc >= BEAT_FP) beat_acc -= BEAT_FP;
         if (song_t >= SONG_LEN) { song_t -= SONG_LEN; beat_acc = BEAT_START + song_t * 128u; }      /* the song starts again, and so does the grid */
     }
-    bob = (beat_on && (state == ST_PLAY || state == ST_PAUSE) && beat_acc < BEAT_WIN);
+    bob = (beat_on && (state == ST_PLAY || state == ST_PAUSE) && (beat_acc < BEAT_WIN || (beat_acc >= BEAT_FP / 2 && beat_acc < BEAT_FP / 2 + BEAT_WIN)));
 }
 
 static void text(unsigned char x, unsigned char y, const char* s, unsigned char set)
@@ -430,7 +433,7 @@ static void reset_enemies_home(void)
     unsigned char i;
     for (i = 0; i < MAXE; ++i) {
         if (e_state[i] == ES_NONE) continue;
-        e_state[i] = (e_type[i] == 2) ? ES_GHOST : ES_WALK; e_flee[i] = 0;
+        e_state[i] = (e_type[i] == 2) ? ES_GHOST : ES_WALK; e_flee[i] = 0; e_mv[i] = 0;
         e_x[i] = e_homec[i] << 3; e_y[i] = e_homer[i] << 3;
         e_dir[i] = DIR_R; e_face[i] = DIR_R; e_prevc[i] = 255; e_prevr[i] = 255;
         e_infl[i] = 0; e_timer[i] = 0; e_acc[i] = 0;
@@ -450,7 +453,7 @@ static void build_level(void)
     if (ne > MAXE) ne = MAXE;
     if (level >= INNINGS) ne = 1;               /* the final inning is the Mascot, alone */
 
-    for (i = 0; i < MAXE; ++i) { e_state[i] = ES_NONE; e_flee[i] = 0; }
+    for (i = 0; i < MAXE; ++i) { e_state[i] = ES_NONE; e_flee[i] = 0; e_mv[i] = 0; }
     for (i = 0; i < MAXC; ++i) c_on[i] = 0;
     for (i = 0; i < ne; ++i) {
         /* each pocket gets its own row, width, column and sometimes a shaft: nothing sits in a fixed slot */
@@ -641,6 +644,7 @@ static void player_update(void)
     }
 
     pmoving = moved;
+    if (moved) pmv = 4; else if (pmv) --pmv;          /* digging is half speed, so Doug moves every other tick: hold "moving" a few ticks for the head bob */
     if (moved) {
         ++panim;
         c = (px + 4) >> 3; r = (py + 4) >> 3;
@@ -882,6 +886,8 @@ static void enemy_update(unsigned char i)
         e_pts[i] = (r <= 3) ? 2 : (r <= 6) ? 3 : (r <= 9) ? 4 : 5;      /* what a kill here would pay */
     }
 
+    if (e_mv[i]) --e_mv[i];
+
     switch (st) {
     case ES_WALK:
         if (e_type[i] == 0 && !e_flee[i]) {
@@ -928,7 +934,7 @@ static void enemy_update(unsigned char i)
                 }
             }
             d = e_dir[i];
-            e_x[i] = x + DX[d]; e_y[i] = y + DY[d];
+            e_x[i] = x + DX[d]; e_y[i] = y + DY[d]; e_mv[i] = 6;
             if (d < 2) e_face[i] = d;
             break;
         }
@@ -951,7 +957,7 @@ static void enemy_update(unsigned char i)
         }
         d = e_dir[i];
         /* enemies only walk through tunnels (choose_dir guarantees the next cell) */
-        e_x[i] = x + DX[d]; e_y[i] = y + DY[d];
+        e_x[i] = x + DX[d]; e_y[i] = y + DY[d]; e_mv[i] = 6;
         if (d < 2) e_face[i] = d;
         if (e_flee[i] && e_y[i] == 0) enemy_escape(i);      /* out through the top of Doug's shaft */
         break;
@@ -1186,10 +1192,10 @@ static void draw_enemy(unsigned char i)
     }
     switch (st) {
     case ES_WALK:
-        if (e_type[i] == 4) { BLIT_BOB(slot_spr2, x - 4, y - 4, 16, 16, mascot_x[k], mascot_y[k], 10); if (e_infl[i]) draw_mark(i, x, y); }
-        else if (e_type[i] == 3) BLIT_BOB(slot_spr, x, y, 8, 8, gk_x[k], gk_y[k], 5);
+        if (e_type[i] == 4) { BLIT_BOB(slot_spr2, x - 4, y - 4, 16, 16, mascot_x[k], mascot_y[k], 10, e_mv[i]); if (e_infl[i]) draw_mark(i, x, y); }
+        else if (e_type[i] == 3) BLIT_BOB(slot_spr, x, y, 8, 8, gk_x[k], gk_y[k], 5, e_mv[i]);
         else if (e_type[i])      BLIT(slot_spr, x, y, 8, 8, emb_x[k], emb_y[k]);
-        else                     BLIT_BOB(slot_spr, x, y, 8, 8, grub_x[k], grub_y[k], 5);
+        else                     BLIT_BOB(slot_spr, x, y, 8, 8, grub_x[k], grub_y[k], 5, e_mv[i]);
         break;
     case ES_FLAME:
         if (e_type[i] == 0) {                          /* ritual: the Vumpire glows red */
@@ -1260,7 +1266,7 @@ static void draw_player(void)
         return;
     }
     f = pmoving ? ((panim >> 2) & 1) : 0;
-    BLIT_BOB(slot_spr, x, y, 8, 8, doug_x[pdir * 2 + f], doug_y[pdir * 2 + f], 5);
+    BLIT_BOB(slot_spr, x, y, 8, 8, doug_x[pdir * 2 + f], doug_y[pdir * 2 + f], 5, pmv);
 }
 
 static void draw_hud(void)
