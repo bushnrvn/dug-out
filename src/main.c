@@ -111,6 +111,7 @@ unsigned char ball_on, ball_x, ball_y, ball_dir, ball_dist, throw_cd, ball_dirt;
 /* enemies (structure of arrays: cheaper on a 6502) */
 unsigned char e_state[MAXE], e_type[MAXE], e_x[MAXE], e_y[MAXE], e_dir[MAXE], e_face[MAXE];
 unsigned char e_infl[MAXE], e_timer[MAXE], e_acc[MAXE], e_homec[MAXE], e_homer[MAXE], e_flen[MAXE];
+unsigned char e_flee[MAXE], e_pts[MAXE];      /* running for the top (the last two enemies), and what it would cost if they get there (hundreds) */
 unsigned char e_prevc[MAXE], e_prevr[MAXE];
 
 /* headstones of struck-out Vumpires; a living Vumpire that reaches one raises it again */
@@ -125,7 +126,7 @@ unsigned char r_on[MAXR], r_c[MAXR], r_r[MAXR], r_y[MAXR], r_state[MAXR], r_time
 #define MAXP 4
 unsigned char pop_t[MAXP], pop_x[MAXP], pop_y[MAXP];
 unsigned int pop_v[MAXP];
-unsigned char candy_on, candy_c, candy_r;      /* a wrapped candy lying in one enemy cave: 500 points */
+unsigned char peanut_on, peanut_c, peanut_r;      /* a peanut lying in one enemy cave: 500 points */
 
 static void add_popup(unsigned char x, unsigned char y, unsigned int v)
 {
@@ -382,7 +383,7 @@ static void carve(unsigned char c, unsigned char r, unsigned char w, unsigned ch
 
 static void build_title_map(void)
 {
-    candy_on = 0;
+    peanut_on = 0;
     clear_map();
     carve(0, 9, 14, 1);
     carve(3, 3, 1, 7);
@@ -405,7 +406,7 @@ static void reset_enemies_home(void)
     unsigned char i;
     for (i = 0; i < MAXE; ++i) {
         if (e_state[i] == ES_NONE) continue;
-        e_state[i] = (e_type[i] == 2) ? ES_GHOST : ES_WALK;
+        e_state[i] = (e_type[i] == 2) ? ES_GHOST : ES_WALK; e_flee[i] = 0;
         e_x[i] = e_homec[i] << 3; e_y[i] = e_homer[i] << 3;
         e_dir[i] = DIR_R; e_face[i] = DIR_R; e_prevc[i] = 255; e_prevr[i] = 255;
         e_infl[i] = 0; e_timer[i] = 0; e_acc[i] = 0;
@@ -425,7 +426,7 @@ static void build_level(void)
     if (ne > MAXE) ne = MAXE;
     if (level >= INNINGS) ne = 1;               /* the final inning is the Mascot, alone */
 
-    for (i = 0; i < MAXE; ++i) e_state[i] = ES_NONE;
+    for (i = 0; i < MAXE; ++i) { e_state[i] = ES_NONE; e_flee[i] = 0; }
     for (i = 0; i < MAXC; ++i) c_on[i] = 0;
     for (i = 0; i < ne; ++i) {
         /* each pocket gets its own row, width, column and sometimes a shaft: nothing sits in a fixed slot */
@@ -467,10 +468,10 @@ static void build_level(void)
             break;
         }
     }
-    i = rng() % ne;                             /* a wrapped candy lies in one of the enemy caves, near its middle */
+    i = rng() % ne;                             /* a peanut lies in one of the enemy caves, near its middle */
     c = e_homec[i] + rng() % 3 - 1; r = e_homer[i];
     if (M(c, r) != 0) c = e_homec[i];
-    candy_c = c; candy_r = r; candy_on = 1;
+    peanut_c = c; peanut_r = r; peanut_on = 1;
     reset_player();
     reset_enemies_home();
     field_reload();
@@ -629,8 +630,8 @@ static void player_update(void)
         }
     }
 
-    if (candy_on && ((px + 4) >> 3) == candy_c && ((py + 4) >> 3) == candy_r) {      /* the candy: enemies walk over it, Doug picks it up */
-        candy_on = 0;
+    if (peanut_on && ((px + 4) >> 3) == peanut_c && ((py + 4) >> 3) == peanut_r) {      /* the peanut: enemies walk over it, Doug picks it up */
+        peanut_on = 0;
         add_score(5); add_popup(px, py, 5);
         SFXP(ASSET__audio__oneup_sfx_ID, 1);
     }
@@ -687,7 +688,7 @@ static void choose_dir(unsigned char i)
         e_dir[i] = open_cell(nc, nr) ? rev : cur;
         return;
     }
-    if (n > 1 && rng() < (e_type[i] ? 110 : 80)) bd = opt[rng() % n];
+    if (n > 1 && rng() < (e_type[i] ? 70 : 50)) bd = opt[rng() % n];      /* mostly they head straight for Doug */
     e_dir[i] = bd;
 }
 
@@ -779,13 +780,62 @@ static void refill_cell(unsigned char c, unsigned char r, unsigned char self)
     mark_around(c, r);
 }
 
+/* an enemy made it off the top of the screen: Doug loses what it would have been worth */
+static void enemy_escape(unsigned char i)
+{
+    if (score_h > e_pts[i]) score_h -= e_pts[i]; else { score_h = 0; score_t = 0; }
+    score_dirty = 1;
+    add_popup(e_x[i], 0, e_pts[i] | 0x8000);
+    SFXP(ASSET__audio__thud_sfx_ID, 2);
+    e_state[i] = ES_NONE;
+    --enemies_left;
+}
+
+/* the way to the top along open tunnels (breadth first search from the enemy's cell to any cell of row 0).
+ * Sets e_dir and returns 1, or returns 0 if there is no way: a sealed cave stays sealed. */
+static unsigned char fl_par[(ROWS + 1) << 4], fl_q[(ROWS + 1) << 4];
+static unsigned char flee_dir(unsigned char i)
+{
+    unsigned char head = 0, tail = 0, cur, c, r, d, nc, nr, n, start, d0 = 0;
+    for (n = 0; n < sizeof fl_par; ++n) fl_par[n] = 0;
+    start = ((e_y[i] >> 3) << 4) | (e_x[i] >> 3);
+    fl_q[tail++] = start; fl_par[start] = 5;
+    while (head != tail) {
+        cur = fl_q[head++]; c = cur & 15; r = cur >> 4;
+        if (r == 0 && cur != start) {                       /* found the top: walk back to the first step */
+            while (cur != start) {
+                d = fl_par[cur] - 1; d0 = d;
+                cur = (unsigned char)(((((signed char)(cur >> 4)) - DY[d]) << 4) | (((signed char)(cur & 15)) - DX[d]));
+            }
+            e_dir[i] = d0;
+            return 1;
+        }
+        for (d = 0; d < 4; ++d) {
+            nc = c + DX[d]; nr = r + DY[d];
+            if (!open_cell((signed char)nc, (signed char)nr)) continue;
+            n = (nr << 4) | nc;
+            if (fl_par[n]) continue;
+            fl_par[n] = d + 1;
+            fl_q[tail++] = n;
+        }
+    }
+    return 0;
+}
+
 static void enemy_update(unsigned char i)
 {
     unsigned char st = e_state[i], x = e_x[i], y = e_y[i], d, c, r, tc, tr;
 
+    if (enemies_left <= 2 && e_type[i] <= 2 && !e_flee[i] && (st == ES_WALK || st == ES_GHOST)) {
+        /* only two left: they give up the chase and run for the top, along the tunnels if there is a way (bats fly straight up) */
+        e_flee[i] = 1;
+        r = y >> 3;
+        e_pts[i] = (r <= 3) ? 2 : (r <= 6) ? 3 : (r <= 9) ? 4 : 5;      /* what a kill here would pay */
+    }
+
     switch (st) {
     case ES_WALK:
-        if (e_type[i] == 0) {
+        if (e_type[i] == 0 && !e_flee[i]) {
             /* standing over a fallen Vumpire starts the ritual */
             for (c = 0; c < MAXC; ++c)
                 if (c_on[c] && e_state[c_slot[c]] == ES_NONE && absdiff(x, c_x[c]) < 6 && absdiff(y, c_y[c]) < 6) {
@@ -838,7 +888,7 @@ static void enemy_update(unsigned char i)
             c = x >> 3; r = y >> 3;
             tc = (px + 4) >> 3; tr = (py + 4) >> 3;
             /* heaters spit fire when lined up with Doug */
-            if (e_type[i] == 1 && r == tr && (tc != c) && rng() < 130) {
+            if (e_type[i] == 1 && !e_flee[i] && r == tr && (tc != c) && rng() < 130) {
                 d = (tc > c) ? DIR_R : DIR_L;
                 if (absdiff(tc, c) <= 5 && line_clear(c, r, d, absdiff(tc, c)) == absdiff(tc, c)) {
                     e_state[i] = ES_FLAME; e_timer[i] = 0; e_face[i] = d;
@@ -846,16 +896,26 @@ static void enemy_update(unsigned char i)
                     return;
                 }
             }
-            choose_dir(i);
+            if (!(e_flee[i] && flee_dir(i))) choose_dir(i);
         }
         d = e_dir[i];
         /* enemies only walk through tunnels (choose_dir guarantees the next cell) */
         e_x[i] = x + DX[d]; e_y[i] = y + DY[d];
         if (d < 2) e_face[i] = d;
+        if (e_flee[i] && e_y[i] == 0) enemy_escape(i);      /* out through the top of Doug's shaft */
         break;
 
     case ES_GHOST:
         if (e_timer[i] < 250) ++e_timer[i];
+        if (e_flee[i]) {
+            e_acc[i] += espeed - 2;                        /* a little slower than Doug, so he can cut them off */
+            if (e_acc[i] < 16) return;
+            e_acc[i] -= 16;
+            if (y) --y;
+            e_y[i] = y;
+            if (y == 0) enemy_escape(i);
+            break;
+        }
         if (e_type[i] == 2) {
             /* baseball bat: flies straight at Doug through dirt, diagonally, never lands.
              * It hovers in its pocket for a few seconds (100 ticks) at the start of a round. */
@@ -1182,8 +1242,9 @@ static void draw_popups(void)
     for (i = 0; i < MAXP; ++i) {
         if (!pop_t[i]) continue;
         v = pop_v[i];
-        /* hundreds -> digits + "00" */
+        /* hundreds -> digits + "00" (bit 15: a loss, with a minus sign) */
         n = 0;
+        if (v & 0x8000) { buf[n++] = '-'; v &= 0x7FFF; }
         if (v >= 100) buf[n++] = '0' + v / 100;
         if (v >= 10) buf[n++] = '0' + (v / 10) % 10;
         buf[n++] = '0' + v % 10;
@@ -1209,7 +1270,7 @@ static void draw_world(void)
     draw_rocks();
     for (i = 0; i < MAXC; ++i)
         if (c_on[i]) BLIT(slot_spr, FX + c_x[i], FY + c_y[i], 8, 8, SP_TOMB_X, SP_TOMB_Y);
-    if (candy_on && M(candy_c, candy_r) == 0) BLIT(slot_spr, FX + (candy_c << 3), FY + (candy_r << 3), 8, 8, SP_CANDY_X, SP_CANDY_Y);
+    if (peanut_on && M(peanut_c, peanut_r) == 0) BLIT(slot_spr, FX + (peanut_c << 3), FY + (peanut_r << 3), 8, 8, SP_PEANUT_X, SP_PEANUT_Y);
     draw_ball();
     enemies_draw_all();
     draw_player();
