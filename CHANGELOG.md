@@ -2,6 +2,11 @@
 
 Versions follow MAJOR.MINOR.PATCH. The current version is in `VERSION`. Each release is a git tag (`v1.0.0`) with the ROM in `releases/`.
 
+## 1.3.2
+* A Heater's starting tunnel is now at least 4 cells wide, so there is always room to get to it and throw. Before, a Heater could start in a 2 or 3 cell pocket you could not reach safely.
+* The caves change a little as a result (the same seed gives a different Heater pocket), but nothing else about the levels does.
+* ROM: `releases/dugout-1.3.2.gtr`. The web build in `docs/` is rebuilt with it.
+
 ## 1.3.1
 * Fix: the on-screen touch controls in the web build now work on iOS Safari. Taps were read one row off, and sliding between buttons or interrupted touches could leave a direction stuck.
 * The ROM is unchanged (`releases/dugout-1.3.0.gtr`); only the web build in `docs/` changed.
