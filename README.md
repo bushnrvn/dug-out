@@ -40,6 +40,7 @@ Current version: see `VERSION` and `CHANGELOG.md`. The ROM for each release is i
 * **Groundskeepers** (inning 5+) are no threat to Doug's life, but they wander the tunnels and rake them shut behind them, taking back the points those blocks paid. They count toward clearing the inning, so strike them out too.
 * **The final inning** is a single boss, **Mad Scott**: a huge slow foam-head that smashes a tunnel through the dirt straight at you and takes six
   strikes (a home plate counts as three). Beat it to win.
+* A **wrapped candy** lies in one of the enemy caves each inning, at a random spot. Enemies walk over it; dig to it and touch it for 500 points.
 * Deeper critters and multi-kill boulders score more. Tunnelling pays too: 10, 20, 30 or 40 points per block by depth, and the Groundskeeper takes back exactly that when it rakes a block shut. Extra life every 10,000.
 
 ## Visual language ("Ballpark Strata")

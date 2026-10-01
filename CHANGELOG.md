@@ -7,6 +7,7 @@ Versions follow MAJOR.MINOR.PATCH. The current version is in `VERSION`. Each rel
 * A stunned enemy now kills Doug if he touches it (Vumpires, Heaters, bats and Mad Scott; the Groundskeeper is still no threat to Doug's life). Before, Doug passed straight through a stunned one.
 * Baseball bats leave their pocket sooner at the start of an inning (about 3.3 seconds instead of 5).
 * An extra life now comes every 10,000 points instead of every 30,000.
+* New: a wrapped candy lies at a random spot in one of the enemy caves each inning. Enemies pass over it; Doug picks it up for 500 points.
 
 ## 1.3.3
 * A thrown ball now stops at dirt instead of flying on through it. It still gets one last chance to hit a Baseball Bat or Mad Scott sitting in the first dirt cell at a tunnel mouth, so bats can only be hit when they come out into the open.

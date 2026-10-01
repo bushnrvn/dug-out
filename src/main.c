@@ -125,6 +125,7 @@ unsigned char r_on[MAXR], r_c[MAXR], r_r[MAXR], r_y[MAXR], r_state[MAXR], r_time
 #define MAXP 4
 unsigned char pop_t[MAXP], pop_x[MAXP], pop_y[MAXP];
 unsigned int pop_v[MAXP];
+unsigned char candy_on, candy_c, candy_r;      /* a wrapped candy lying in one enemy cave: 500 points */
 
 static void add_popup(unsigned char x, unsigned char y, unsigned int v)
 {
@@ -381,6 +382,7 @@ static void carve(unsigned char c, unsigned char r, unsigned char w, unsigned ch
 
 static void build_title_map(void)
 {
+    candy_on = 0;
     clear_map();
     carve(0, 9, 14, 1);
     carve(3, 3, 1, 7);
@@ -465,6 +467,10 @@ static void build_level(void)
             break;
         }
     }
+    i = rng() % ne;                             /* a wrapped candy lies in one of the enemy caves, near its middle */
+    c = e_homec[i] + rng() % 3 - 1; r = e_homer[i];
+    if (M(c, r) != 0) c = e_homec[i];
+    candy_c = c; candy_r = r; candy_on = 1;
     reset_player();
     reset_enemies_home();
     field_reload();
@@ -621,6 +627,12 @@ static void player_update(void)
             mark_around(c, r);
             SFX(ASSET__audio__dig_sfx_ID);
         }
+    }
+
+    if (candy_on && ((px + 4) >> 3) == candy_c && ((py + 4) >> 3) == candy_r) {      /* the candy: enemies walk over it, Doug picks it up */
+        candy_on = 0;
+        add_score(5); add_popup(px, py, 5);
+        SFXP(ASSET__audio__oneup_sfx_ID, 1);
     }
 
     /* --- throw a baseball ---------------------------------------------- */
@@ -1197,6 +1209,7 @@ static void draw_world(void)
     draw_rocks();
     for (i = 0; i < MAXC; ++i)
         if (c_on[i]) BLIT(slot_spr, FX + c_x[i], FY + c_y[i], 8, 8, SP_TOMB_X, SP_TOMB_Y);
+    if (candy_on && M(candy_c, candy_r) == 0) BLIT(slot_spr, FX + (candy_c << 3), FY + (candy_r << 3), 8, 8, SP_CANDY_X, SP_CANDY_Y);
     draw_ball();
     enemies_draw_all();
     draw_player();
