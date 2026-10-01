@@ -2,6 +2,12 @@
 
 Versions follow MAJOR.MINOR.PATCH. The current version is in `VERSION`. Each release is a git tag (`v1.0.0`) with the ROM in `releases/`.
 
+## Unreleased
+* Heaters: the flame now hurts only where it is drawn (before, it reached 6 pixels past its end and caught the edge of Doug's sprite), and one fireball circles each Heater instead of two, with its hit box matching.
+* A stunned enemy now kills Doug if he touches it (Vumpires, Heaters, bats and Mad Scott; the Groundskeeper is still no threat to Doug's life). Before, Doug passed straight through a stunned one.
+* Baseball bats leave their pocket sooner at the start of an inning (about 3.3 seconds instead of 5).
+* An extra life now comes every 10,000 points instead of every 30,000.
+
 ## 1.3.3
 * A thrown ball now stops at dirt instead of flying on through it. It still gets one last chance to hit a Baseball Bat or Mad Scott sitting in the first dirt cell at a tunnel mouth, so bats can only be hit when they come out into the open.
 * ROM: `releases/dugout-1.3.3.gtr`. The web build in `docs/` is rebuilt with it.

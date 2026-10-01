@@ -31,16 +31,16 @@ Current version: see `VERSION` and `CHANGELOG.md`. The ROM for each release is i
 | `Z` (A button) | Throw a baseball |
 | `Enter` (Start) | Start / pause |
 
-* Every hit is a **strike**: X1 in white, X2 in yellow, and the third (X3, red) is an out. Leave an enemy alone and its strikes wear off.
+* Every hit is a **strike**: X1 in white, X2 in yellow, and the third (X3, red) is an out. Leave an enemy alone and its strikes wear off. A stunned enemy is still dangerous: touch one and you lose a life.
 * Dig out from under a home plate and it wobbles, then falls. It crushes anything below - **including Doug**.
 * **Vumpires** walk the tunnels and can **raise fallen Vumpires**: a struck-out Vumpire leaves a headstone, and a living Vumpire that reaches it brings it back - unless every Vumpire is gone. Stomp a headstone to stop it. Home plates finish them for good.
-* **Heaters** (inning 2+) breathe fire along a straight tunnel after a short wind-up (watch for the blink), and two fireballs circle each one, so keep your distance and throw.
-* **Baseball Bats** (inning 3+) are winged baseballs that fly straight through dirt at Doug. They wait a few
-  seconds at the start of each inning, and your throws can hit them only in the open: a ball stops at dirt, so a bat has to come out into a tunnel before you can hit it.
+* **Heaters** (inning 2+) breathe fire along a straight tunnel after a short wind-up (watch for the blink), and a fireball circles each one, so keep your distance and throw. The flame hurts only where it is drawn.
+* **Baseball Bats** (inning 3+) are winged baseballs that fly straight through dirt at Doug. They wait a short
+  while at the start of each inning, and your throws can hit them only in the open: a ball stops at dirt, so a bat has to come out into a tunnel before you can hit it.
 * **Groundskeepers** (inning 5+) are no threat to Doug's life, but they wander the tunnels and rake them shut behind them, taking back the points those blocks paid. They count toward clearing the inning, so strike them out too.
 * **The final inning** is a single boss, **Mad Scott**: a huge slow foam-head that smashes a tunnel through the dirt straight at you and takes six
   strikes (a home plate counts as three). Beat it to win.
-* Deeper critters and multi-kill boulders score more. Tunnelling pays too: 10, 20, 30 or 40 points per block by depth, and the Groundskeeper takes back exactly that when it rakes a block shut. Extra life every 30,000.
+* Deeper critters and multi-kill boulders score more. Tunnelling pays too: 10, 20, 30 or 40 points per block by depth, and the Groundskeeper takes back exactly that when it rakes a block shut. Extra life every 10,000.
 
 ## Visual language ("Ballpark Strata")
 

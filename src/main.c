@@ -48,7 +48,7 @@ enum { DIR_R, DIR_L, DIR_U, DIR_D };
 static const signed char DX[4] = { 1, -1, 0, 0 };
 #define WINDUP 10           /* frames a Heater stands still before the fire comes out */
 #define FLAME_END 30
-/* two fireballs circle every Heater: offsets of an 8x8 sprite around its owner */
+/* one fireball circles every Heater: offsets of an 8x8 sprite around its owner */
 static const signed char ORB_X[8] = { 0, 6, 9, 6, 0, -6, -9, -6 };
 static const signed char ORB_Y[8] = { -9, -6, 0, 6, 9, 6, 0, -6 };
 #define ORB_K(n) ((unsigned char)(((frame_ct >> 2) + ((n) << 2)) & 7))
@@ -172,7 +172,7 @@ static void add_score(unsigned int h)
     score_h += h;
     if (score_h > hi_h || (score_h == hi_h && score_t > hi_t)) { hi_h = score_h; hi_t = score_t; }
     if (score_h >= next_life_h) {
-        next_life_h += 300;
+        next_life_h += 100;
         if (lives < 5) ++lives;
         SFXP(ASSET__audio__oneup_sfx_ID, 2);
     }
@@ -681,13 +681,10 @@ static void choose_dir(unsigned char i)
 
 static unsigned char orb_hits_player(unsigned char i)
 {
-    unsigned char n, k;
+    unsigned char k;
     if (e_type[i] != 1) return 0;
-    for (n = 0; n < 2; ++n) {
-        k = ORB_K(n);
-        if (absdiff((unsigned char)(e_x[i] + ORB_X[k]), px) < 5 && absdiff((unsigned char)(e_y[i] + ORB_Y[k]), py) < 5) return 1;
-    }
-    return 0;
+    k = ORB_K(0);                                   /* the one fireball: its box is where it is drawn */
+    return (absdiff((unsigned char)(e_x[i] + ORB_X[k]), px) < 5 && absdiff((unsigned char)(e_y[i] + ORB_Y[k]), py) < 5);
 }
 
 
@@ -849,8 +846,8 @@ static void enemy_update(unsigned char i)
         if (e_timer[i] < 250) ++e_timer[i];
         if (e_type[i] == 2) {
             /* baseball bat: flies straight at Doug through dirt, diagonally, never lands.
-             * It hovers in its pocket for a few seconds at the start of a round. */
-            if (e_timer[i] < 150) return;
+             * It hovers in its pocket for a few seconds (100 ticks) at the start of a round. */
+            if (e_timer[i] < 100) return;
             e_acc[i] += 11 + (level >> 1);                 /* bats get quicker in later innings */
             if (e_acc[i] < 16) return;
             e_acc[i] -= 16;
@@ -907,16 +904,16 @@ static void enemy_update(unsigned char i)
 
 static unsigned char flame_hits_player(unsigned char i)
 {
-    unsigned char len = e_flen[i] * 8 + 6;
+    unsigned char len = e_flen[i] * 8;              /* exactly as long as it is drawn */
     unsigned char fx;
     if (e_type[i] != 1 || e_state[i] != ES_FLAME || e_timer[i] < WINDUP) return 0;
-    if (absdiff(e_y[i], py) > 5) return 0;
+    if (absdiff(e_y[i], py) > 5) return 0;          /* the flame's solid rows are 1-6 of its 8; Doug's body is the middle 6x6 of his sprite */
     if (e_face[i] == DIR_R) {
         fx = e_x[i] + 8;
-        return (px + 6 > fx && px < fx + len);
+        return (px + 7 > fx && px + 1 < fx + len);
     }
     fx = e_x[i] > len ? e_x[i] - len : 0;
-    return (px + 8 > fx && px + 2 < e_x[i]);
+    return (px + 7 > fx && px + 1 < e_x[i]);
 }
 
 static void enemies_update_all(void)
@@ -931,9 +928,9 @@ static unsigned char enemies_touch_player(void)
     unsigned char i, k;
     for (i = 0; i < MAXE; ++i) {
         k = e_state[i];
-        if ((k == ES_WALK || k == ES_GHOST || k == ES_FLAME) && e_type[i] != 3) {
+        if ((k == ES_WALK || k == ES_GHOST || k == ES_FLAME || k == ES_INFL) && e_type[i] != 3) {   /* a stunned enemy still kills on touch */
             if (absdiff(e_x[i], px) < 6 && absdiff(e_y[i], py) < 6) return 1;
-            if (flame_hits_player(i) || orb_hits_player(i)) return 1;
+            if (k != ES_INFL && (flame_hits_player(i) || orb_hits_player(i))) return 1;
         }
     }
     return 0;
@@ -1058,13 +1055,11 @@ static void draw_enemy(unsigned char i)
     unsigned char st = e_state[i], x = FX + e_x[i], y = FY + e_y[i], f, sz, k;
     f = ((frame_ct >> 2) & 1);
     k = e_face[i] * 2 + f;
-    if (e_type[i] == 1 && (st == ES_WALK || st == ES_FLAME)) {      /* the two fireballs circling a Heater */
+    if (e_type[i] == 1 && (st == ES_WALK || st == ES_FLAME)) {      /* the fireball circling a Heater */
         signed int ox, oy;
-        for (sz = 0; sz < 2; ++sz) {
-            ox = (signed int)x + ORB_X[ORB_K(sz)]; oy = (signed int)y + ORB_Y[ORB_K(sz)];
-            if (ox >= 0 && ox < 121 && oy >= 0 && oy < 121)
-                BLIT(slot_spr, (unsigned char)ox, (unsigned char)oy, 8, 8, flame_x[(f + sz) & 1], flame_y[(f + sz) & 1]);
-        }
+        ox = (signed int)x + ORB_X[ORB_K(0)]; oy = (signed int)y + ORB_Y[ORB_K(0)];
+        if (ox >= 0 && ox < 121 && oy >= 0 && oy < 121)
+            BLIT(slot_spr, (unsigned char)ox, (unsigned char)oy, 8, 8, flame_x[f & 1], flame_y[f & 1]);
     }
     switch (st) {
     case ES_WALK:
@@ -1212,7 +1207,7 @@ static void draw_world(void)
 /* ------------------------------------------------------------- game flow -- */
 static void new_game(void)
 {
-    level = 1; lives = 3; score_h = 0; score_t = 0; next_life_h = 300;
+    level = 1; lives = 3; score_h = 0; score_t = 0; next_life_h = 100;
     hi_at_start = hi_h; new_best = 0;
 #ifdef FIXED_SEED
     run_seed = FIXED_SEED;                        /* regression builds: same caves every run */
