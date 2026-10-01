@@ -2,6 +2,10 @@
 
 Versions follow MAJOR.MINOR.PATCH. The current version is in `VERSION`. Each release is a git tag (`v1.0.0`) with the ROM in `releases/`.
 
+## 1.3.1
+* Fix: the on-screen touch controls in the web build now work on iOS Safari. Taps were read one row off, and sliding between buttons or interrupted touches could leave a direction stuck.
+* The ROM is unchanged (`releases/dugout-1.3.0.gtr`); only the web build in `docs/` changed.
+
 ## 1.3.0
 * Scoring: tunnelling pays 10, 20, 30 or 40 points per block, matching the four depth bands that enemy kills use. The score now keeps a tens digit.
 * The Groundskeeper takes back exactly what a block paid when it rakes the block shut. Blocks Doug did not dig (the enemy pockets, or tunnels the boss smashed) cost nothing, and the score never drops below zero.
