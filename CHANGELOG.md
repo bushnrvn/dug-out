@@ -2,7 +2,7 @@
 
 Versions follow MAJOR.MINOR.PATCH. The current version is in `VERSION`. Each release is a git tag (`v1.0.0`) with the ROM in `releases/`.
 
-## Unreleased
+## 1.4.0
 * Heaters: the flame now hurts only where it is drawn (before, it reached 6 pixels past its end and caught the edge of Doug's sprite), and one fireball circles each Heater instead of two, with its hit box matching.
 * A stunned enemy now kills Doug if he touches it (Vumpires, Heaters, bats and Mad Scott; the Groundskeeper is still no threat to Doug's life). Before, Doug passed straight through a stunned one.
 * Baseball bats leave their pocket sooner at the start of an inning (about 3.3 seconds instead of 5).
@@ -12,6 +12,7 @@ Versions follow MAJOR.MINOR.PATCH. The current version is in `VERSION`. Each rel
 * Walking enemies now find the way to Doug along the open tunnels (a breadth first search, around corners and dead ends) instead of only steering toward him, so once a path is open they come for him. With no open path they stay in their caves.
 * Doug and the walking enemies (Vumpires, Groundskeepers, Mad Scott; not Heaters or bats) nod their heads, a pixel down, in time with the music while they move: on each snare hit and on the beat between. They stop when they stand still.
 * New: a gold bar lies at a random spot in one of the enemy caves each inning. Enemies pass over it; Doug picks it up for 500 points.
+* ROM: `releases/dugout-1.4.0.gtr`. The web build in `docs/` is rebuilt with it.
 
 ## 1.3.3
 * A thrown ball now stops at dirt instead of flying on through it. It still gets one last chance to hit a Baseball Bat or Mad Scott sitting in the first dirt cell at a tunnel mouth, so bats can only be hit when they come out into the open.
