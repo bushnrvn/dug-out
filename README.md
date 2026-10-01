@@ -41,6 +41,7 @@ Current version: see `VERSION` and `CHANGELOG.md`. The ROM for each release is i
 * **The final inning** is a single boss, **Mad Scott**: a huge slow foam-head that smashes a tunnel through the dirt straight at you and takes six
   strikes (a home plate counts as three). Beat it to win.
 * **Enemies stay in their caves until a path is dug**, by Doug or, from inning 5, by the Groundskeeper's tunnelling. Once one is open they head for Doug. **When only two are left they run for the top** along the tunnels (bats fly straight up through the dirt); one that gets out costs you the points it would have been worth, so cut them off.
+* Doug and the walking enemies (Vumpires, the Groundskeeper, Mad Scott) **nod their heads on the beat** of the theme's snare drum.
 * A **gold bar** lies in one of the enemy caves each inning, at a random spot. Enemies walk over it; dig to it and touch it for 500 points.
 * Deeper critters and multi-kill boulders score more. Tunnelling pays too: 10, 20, 30 or 40 points per block by depth, and the Groundskeeper takes back exactly that when it rakes a block shut. Extra life every 10,000.
 

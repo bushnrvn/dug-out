@@ -126,6 +126,8 @@ unsigned char r_on[MAXR], r_c[MAXR], r_r[MAXR], r_y[MAXR], r_state[MAXR], r_time
 #define MAXP 4
 unsigned char pop_t[MAXP], pop_x[MAXP], pop_y[MAXP];
 unsigned int pop_v[MAXP];
+unsigned int beat_acc, song_t;                /* where the music's beat is (see beat_tick) */
+unsigned char beat_on, bob;                   /* bob: the player and the walkers nod their heads while it is 1 */
 unsigned char gold_on, gold_c, gold_r;      /* a gold bar lying in one enemy cave: 500 points */
 
 static void add_popup(unsigned char x, unsigned char y, unsigned int v)
@@ -317,8 +319,30 @@ static void field_reload(void)
 #define BLIT(sl, X, Y, W, H, GX, GY) \
     do { rect.x = (X); rect.y = (Y); rect.w = (W); rect.h = (H); \
          rect.gx = (GX); rect.gy = (GY); rect.b = (sl); queue_draw_sprite_rect(); } while (0)
+/* a sprite whose top HD rows (the head) drop a pixel on the beat: the body first, then the head over it */
+#define BLIT_BOB(sl, X, Y, W, H, GX, GY, HD) \
+    do { if (bob) { BLIT(sl, X, (Y) + (HD), W, (H) - (HD), GX, (GY) + (HD)); BLIT(sl, X, (Y) + 1, W, HD, GX, GY); } \
+         else BLIT(sl, X, Y, W, H, GX, GY); } while (0)
 
 #pragma code-name (push, "CODE")     /* shared by every bank, so it lives in the fixed one */
+/* The beat. The theme's snare hits fall on a grid 52.15 frames apart (26.075 game ticks), the first 26.9 frames into the song, and the song
+ * (8371 frames) loops. beat_acc is how far into a beat it is, in 1/256 ticks; bob is set for the first part of each beat. */
+#define BEAT_FP    6675u
+#define BEAT_START (6675u - 3443u)
+#define BEAT_WIN   1280u
+#define SONG_LEN   8371u
+static void beat_start(void) { beat_acc = BEAT_START; song_t = 0; beat_on = 1; }
+
+static void beat_tick(void)
+{
+    if (beat_on) {
+        beat_acc += 256; song_t += 2;
+        if (beat_acc >= BEAT_FP) beat_acc -= BEAT_FP;
+        if (song_t >= SONG_LEN) { song_t -= SONG_LEN; beat_acc = BEAT_START + song_t * 128u; }      /* the song starts again, and so does the grid */
+    }
+    bob = (beat_on && (state == ST_PLAY || state == ST_PAUSE) && beat_acc < BEAT_WIN);
+}
+
 static void text(unsigned char x, unsigned char y, const char* s, unsigned char set)
 {
     unsigned char ch, idx, cell, gx, gy;
@@ -1162,10 +1186,10 @@ static void draw_enemy(unsigned char i)
     }
     switch (st) {
     case ES_WALK:
-        if (e_type[i] == 4) { BLIT(slot_spr2, x - 4, y - 4, 16, 16, mascot_x[k], mascot_y[k]); if (e_infl[i]) draw_mark(i, x, y); }
-        else if (e_type[i] == 3) BLIT(slot_spr, x, y, 8, 8, gk_x[k], gk_y[k]);
+        if (e_type[i] == 4) { BLIT_BOB(slot_spr2, x - 4, y - 4, 16, 16, mascot_x[k], mascot_y[k], 10); if (e_infl[i]) draw_mark(i, x, y); }
+        else if (e_type[i] == 3) BLIT_BOB(slot_spr, x, y, 8, 8, gk_x[k], gk_y[k], 5);
         else if (e_type[i])      BLIT(slot_spr, x, y, 8, 8, emb_x[k], emb_y[k]);
-        else                     BLIT(slot_spr, x, y, 8, 8, grub_x[k], grub_y[k]);
+        else                     BLIT_BOB(slot_spr, x, y, 8, 8, grub_x[k], grub_y[k], 5);
         break;
     case ES_FLAME:
         if (e_type[i] == 0) {                          /* ritual: the Vumpire glows red */
@@ -1236,7 +1260,7 @@ static void draw_player(void)
         return;
     }
     f = pmoving ? ((panim >> 2) & 1) : 0;
-    BLIT(slot_spr, x, y, 8, 8, doug_x[pdir * 2 + f], doug_y[pdir * 2 + f]);
+    BLIT_BOB(slot_spr, x, y, 8, 8, doug_x[pdir * 2 + f], doug_y[pdir * 2 + f], 5);
 }
 
 static void draw_hud(void)
@@ -1325,6 +1349,7 @@ static void new_game(void)
 static void start_music(void)
 {
     play_song(ASSET__audio__theme_mid, REPEAT_LOOP);
+    beat_start();
 }
 
 static void kill_player(void)
@@ -1629,6 +1654,7 @@ void game_main(void)
     while (1) {
         update_inputs();
         ++frame_ct;
+        beat_tick();
         music_poll();
 
         switch (state) {
