@@ -100,23 +100,22 @@
       });
       // on-screen pad (phones/tablets)
       var map = [[0,2056,0,32,0,8192,0],[512,0,256,0,8192,0,4096],[0,1028,0,0,0,16,0],[0,0,0,0,0,0,0]];
-      var pad = document.getElementById('pad'), ids = [], held = 0;
-      pad.ontouchstart = function (e) {
+      var pad = document.getElementById('pad'), held = -1;
+      // work out which buttons every finger on the pad is on, from the pad's own position on screen
+      function sync(e) {
         e.preventDefault();
-        for (var i = 0; i < e.targetTouches.length; i++) {
-          var s = 4 / e.targetTouches[0].target.clientHeight;
-          var r = 3 - Math.floor(s * (document.body.clientHeight - e.targetTouches[i].clientY));
-          var c = Math.floor(s * e.targetTouches[i].clientX);
-          if (map[r] && map[r][c] !== undefined) { ids[e.targetTouches[i].identifier] = map[r][c]; held |= map[r][c]; }
+        var rc = pad.getBoundingClientRect(), now = 0;
+        for (var i = 0; i < e.touches.length; i++) {
+          var t = e.touches[i];
+          var r = Math.floor(4 * (t.clientY - rc.top) / rc.height), c = Math.floor(7 * (t.clientX - rc.left) / rc.width);
+          if (map[r] && map[r][c]) now |= map[r][c];
         }
-        Module.ccall('SetButtons', null, ['int'], [held]);
-        if (!started) start();
-      };
-      pad.ontouchend = function (e) {
-        e.preventDefault();
-        for (var i = 0; i < e.changedTouches.length; i++) held &= ~(ids[e.changedTouches[i].identifier] || 0);
-        Module.ccall('SetButtons', null, ['int'], [held]);
-      };
+        if (now !== held) { held = now; Module.ccall('SetButtons', null, ['int'], [now]); }
+        if (e.type === 'touchstart' && !started) start();
+      }
+      ['touchstart', 'touchmove', 'touchend', 'touchcancel'].forEach(function (n) {
+        pad.addEventListener(n, sync, { passive: false });
+      });
     }
   };
 
