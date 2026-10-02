@@ -2,6 +2,10 @@
 
 Versions follow MAJOR.MINOR.PATCH. The current version is in `VERSION`. Each release is a git tag (`v1.0.0`) with the ROM in `releases/`.
 
+## 1.4.2
+* Fixed an inning that could never end. When Doug was caught while an enemy was in the middle of dying (its pop or squash animation), the round reset brought that enemy back to its cave alive but not counted, so the count of enemies left could reach zero with one still alive. Enemies that were already struck out or crushed now stay gone.
+* ROM: `releases/dugout-1.4.2.gtr`. The web build in `docs/` is rebuilt with it.
+
 ## 1.4.0
 * Heaters: the flame now hurts only where it is drawn (before, it reached 6 pixels past its end and caught the edge of Doug's sprite), and one fireball circles each Heater instead of two, with its hit box matching.
 * A stunned enemy now kills Doug if he touches it (Vumpires, Heaters, bats and Mad Scott; the Groundskeeper is still no threat to Doug's life). Before, Doug passed straight through a stunned one.
