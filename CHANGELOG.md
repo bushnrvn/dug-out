@@ -2,6 +2,10 @@
 
 Versions follow MAJOR.MINOR.PATCH. The current version is in `VERSION`. Each release is a git tag (`v1.0.0`) with the ROM in `releases/`.
 
+## 1.4.4
+* A quick tap on a direction key now still turns Doug. Before, a tap shorter than the slide onto the grid line left him stopped, facing the wrong way, until you pressed again. The turn is now remembered for a few ticks and completed when he reaches the grid line.
+* ROM: `releases/dugout-1.4.4.gtr`. The web build in `docs/` is rebuilt with it.
+
 ## 1.4.2
 * Fixed an inning that could never end. When Doug was caught while an enemy was in the middle of dying (its pop or squash animation), the round reset brought that enemy back to its cave alive but not counted, so the count of enemies left could reach zero with one still alive. Enemies that were already struck out or crushed now stay gone.
 * ROM: `releases/dugout-1.4.2.gtr`. The web build in `docs/` is rebuilt with it.
