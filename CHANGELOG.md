@@ -2,6 +2,11 @@
 
 Versions follow MAJOR.MINOR.PATCH. The current version is in `VERSION`. Each release is a git tag (`v1.0.0`) with the ROM in `releases/`.
 
+## 1.4.5
+* Controls are now WASD to dig / move and Space to throw (the arrow keys and Z still work too). The title screen and the web page say so.
+* Web build: the keyboard is now read by the page itself, which makes it work in Safari on a Mac's built-in keyboard (the emulator's own key handling did not receive keys there).
+* ROM: `releases/dugout-1.4.5.gtr`. The web build in `docs/` is rebuilt with it.
+
 ## 1.4.4
 * A quick tap on a direction key now still turns Doug. Before, a tap shorter than the slide onto the grid line left him stopped, facing the wrong way, until you pressed again. The turn is now remembered for a few ticks and completed when he reaches the grid line.
 * ROM: `releases/dugout-1.4.4.gtr`. The web build in `docs/` is rebuilt with it.

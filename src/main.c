@@ -1474,7 +1474,7 @@ static void title_scene(void)
     BLIT(slot_spr, 64 - (SP_LOGO_W >> 1), FY + 11, SP_LOGO_W, SP_LOGO_H, SP_LOGO_X, SP_LOGO_Y);
     if ((frame_ct & 32) == 0) text_center(FY + 40, "PUSH START", 1);
     plaque(20, FY + 84, 88, 12);
-    text_center(FY + 87, "Z:THROW ARROWS:DIG", 0);
+    text_center(FY + 87, "SPACE:THROW WASD:DIG", 0);
 }
 
 /* ---- high score: kept in the cartridge's flash save sector ------------------------------

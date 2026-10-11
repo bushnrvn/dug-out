@@ -44,8 +44,8 @@
 </div>
 <div id="status"></div>
 <div class="keys">
-  <kbd>&larr;</kbd><kbd>&uarr;</kbd><kbd>&darr;</kbd><kbd>&rarr;</kbd> dig / move &nbsp;&middot;&nbsp;
-  <kbd>Z</kbd> throw a baseball &nbsp;&middot;&nbsp; <kbd>Enter</kbd> start / pause &nbsp;&middot;&nbsp; <kbd>R</kbd> reset
+  <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> dig / move (arrow keys work too) &nbsp;&middot;&nbsp;
+  <kbd>Space</kbd> throw a baseball &nbsp;&middot;&nbsp; <kbd>Enter</kbd> start / pause &nbsp;&middot;&nbsp; <kbd>R</kbd> reset
 </div>
 <img id="pad" src="static/gamepad.png" alt="touch controls">
 <small>Best score is saved in this browser. Runs on the GameTank Emulator (MIT, &copy; Clyde Shaffer) &mdash; see LICENSES.</small>
@@ -94,7 +94,7 @@
     onRuntimeInitialized: function () {
       ready = true;
       setInterval(function () { if (document.title !== 'Dug Out') document.title = 'Dug Out'; }, 500);
-      loadmsg.textContent = 'arrows to move, Z to throw, Enter to start';
+      loadmsg.textContent = 'WASD to move, Space to throw, Enter to start';
       document.addEventListener('visibilitychange', function () {
         Module.ccall(document.hidden ? 'PauseEmulation' : 'ResumeEmulation');
       });
@@ -128,6 +128,23 @@
     try { if (window.SDL2 && SDL2.audioContext && SDL2.audioContext.state === 'suspended') SDL2.audioContext.resume(); } catch (e) {}
   }
   overlay.addEventListener('click', start);
+  // Keyboard: read here, by physical key, and hand to the emulator as buttons. (The emulator's own key handling did not
+  // receive keys in Safari; its keys still work in browsers where it does, and the two are simply combined.)
+  var KEYBIT = { KeyW: 2056, ArrowUp: 2056, KeyS: 1028, ArrowDown: 1028, KeyA: 512, ArrowLeft: 512, KeyD: 256, ArrowRight: 256,
+                 Space: 16, KeyZ: 16, Enter: 32 };
+  var keysDown = {};
+  function pushKeys(e) {
+    var bit = KEYBIT[e.code];
+    if (!bit || !started) return;
+    if (e.type === 'keydown') keysDown[e.code] = bit; else delete keysDown[e.code];
+    var m = 0;
+    for (var k in keysDown) m |= keysDown[k];
+    try { Module.ccall('SetButtons', null, ['int'], [m]); } catch (x) {}
+    e.preventDefault();
+  }
+  window.addEventListener('keydown', pushKeys);
+  window.addEventListener('keyup', pushKeys);
+  window.addEventListener('blur', function () { keysDown = {}; try { Module.ccall('SetButtons', null, ['int'], [0]); } catch (x) {} });
   window.addEventListener('keydown', function (e) {
     if (!started && ready && (e.key === 'Enter' || e.key === ' ')) start();
     if (started && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].indexOf(e.key) >= 0) e.preventDefault();

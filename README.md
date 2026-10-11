@@ -27,8 +27,8 @@ Current version: see `VERSION` and `CHANGELOG.md`. The ROM for each release is i
 
 | Key (emulator) | Action |
 |---|---|
-| Arrow keys | Dig / move |
-| `Z` (A button) | Throw a baseball |
+| `W` `A` `S` `D` or arrow keys | Dig / move |
+| `Space` or `Z` (A button) | Throw a baseball |
 | `Enter` (Start) | Start / pause |
 
 * Every hit is a **strike**: X1 in white, X2 in yellow, and the third (X3, red) is an out. Leave an enemy alone and its strikes wear off. A stunned enemy is still dangerous: touch one and you lose a life.
